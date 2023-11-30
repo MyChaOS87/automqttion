@@ -1,0 +1,51 @@
+---
+mqtt:
+  broker: tcp://mosquitto.internal.k8s.vogelherdweg.de:1883
+
+automate:
+  - on: 
+      topic: test/1
+      match: 
+        switch: 0
+    do:
+      - topic: test2/command
+        object:
+          switch: "off"
+  - on: 
+      topic: test/2/switch
+      match: 1
+    do:
+      - topic: test2/command
+        object: "on"
+  - on: 
+      topic: lcn/segment/0/target/4/
+      match: 
+        $yaml: | 
+          Src: 34
+          Cmd: 104
+          Payload: "MAQ="
+    do:
+      - topic: shellyplusplugs-kaffeelicht/command/switch:0
+        object: on
+      - topic: shellyplusplugs-spühle/command/switch:0
+        object: on
+  - on: 
+      topic: lcn/segment/0/target/4/
+      match: 
+        $yaml: | 
+          Src: 34
+          Cmd: 104
+          Payload: "MAA="
+    do:
+      - topic: shellyplusplugs-kaffeelicht/command/switch:0
+        object: "off"
+      - topic: shellyplusplugs-spühle/command/switch:0
+        object: "off"
+
+logger:
+  development: true
+  disableCaller: false
+  disableStacktrace: false
+  encoding: console
+  level: info
+

@@ -1,0 +1,9 @@
+services:
+  automqttion:
+    container_name: automqttion
+    build:
+      context: ./
+      dockerfile: ./Dockerfile
+    restart: always
+
+    
