@@ -3,44 +3,31 @@ mqtt:
   broker: tcp://mosquitto.internal:1883
 
 automate:
-  - on: 
-      topic: test/1
-      match: 
-        switch: 0
-    do:
-      - topic: test2/command
-        object:
-          switch: "off"
-  - on: 
-      topic: test/2/switch
-      match: 1
-    do:
-      - topic: test2/command
-        object: "on"
-  - on: 
-      topic: lcn/segment/0/target/4/
-      match: 
+  lcn/segment/0/target/4/:
+    - match: 
         $yaml: | 
           Src: 34
           Cmd: 104
           Payload: "MAQ="
-    do:
+      actions:
       - topic: shellyplug-lamp/command/switch:0
-        object: on
+        content: 
+          $plain: on
       - topic: shellyplug-heater/command/switch:0
-        object: on
-  - on: 
-      topic: lcn/segment/0/target/4/
-      match: 
+        content: 
+          $plain: on
+    - match: 
         $yaml: | 
           Src: 34
           Cmd: 104
           Payload: "MAA="
-    do:
+      actions:
       - topic: shellyplug-lamp/command/switch:0
-        object: "off"
+        content: 
+          $plain: off
       - topic: shellyplug-heater/command/switch:0
-        object: "off"
+        content: 
+          $plain: off
 
 logger:
   development: true

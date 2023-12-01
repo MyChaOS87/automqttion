@@ -16,8 +16,8 @@ func main() {
 
 	broker.Run(ctx, cancel)
 
-	for _, a := range cfg.Automate {
-		automation.NewAutomation(broker, a).Start(ctx, cancel)
+	for topic, matchers := range cfg.Automate {
+		automation.NewAutomation(broker, topic, matchers).Start(ctx, cancel)
 	}
 
 	<-ctx.Done()

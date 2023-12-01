@@ -18,26 +18,21 @@ type MqttConfig struct {
 	Broker string
 }
 
-type TriggerConfig struct {
-	Topic string
-	Match any
-}
-
 type ActionConfig struct {
-	Topic  string
-	Object any
+	Topic   string
+	Content any
 }
 
-type AutomateConfig struct {
-	On TriggerConfig
-	Do []ActionConfig
+type MatchConfig struct {
+	Match   any
+	Actions []ActionConfig
 }
 
 // Config struct.
 type Config struct {
 	Logger   loggerConfig.Logger
 	Mqtt     MqttConfig
-	Automate []AutomateConfig
+	Automate map[string][]MatchConfig
 }
 
 // LoadConfig loads config file from given path.
