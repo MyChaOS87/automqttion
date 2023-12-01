@@ -11,7 +11,7 @@ type Topic interface {
 	PublishString(s string)
 	Publish(i any)
 	Subscribe(hint any, callback CallbackFunction)
-	SubscribeRawJson(callback CallbackFunction)
+	SubscribeRawJSON(callback CallbackFunction)
 }
 
 type CallbackFunction func(topic string, data any)

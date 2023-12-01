@@ -1,3 +1,4 @@
+//nolint:testpackage
 package automation
 
 import (
@@ -7,6 +8,8 @@ import (
 )
 
 func Test_match(t *testing.T) {
+	t.Parallel()
+
 	tests := []struct {
 		name   string
 		target any
@@ -27,11 +30,19 @@ func Test_match(t *testing.T) {
 		{"map-map+x", map[string]any{"a": 1}, map[string]any{"a": 1, "b": 2}, true},
 		{"map-map+x no match", map[string]any{"a": 1}, map[string]any{"a": 2, "b": 2}, false},
 		{"map1-map+x", map[string]any{"a": 1, "c": "test"}, map[string]any{"a": 1, "b": 2, "c": "test"}, true},
-		{"deepmap", map[string]any{"a": map[string]any{"c": "test"}}, map[string]any{"a": map[string]any{"c": "test", "d": 0}, "b": 2}, true},
+		{
+			"deepmap",
+			map[string]any{"a": map[string]any{"c": "test"}},
+			map[string]any{"a": map[string]any{"c": "test", "d": 0}, "b": 2},
+			true,
+		},
 	}
+
 	for _, tt := range tests {
 		tt := tt
 		t.Run(tt.name, func(t *testing.T) {
+			t.Parallel()
+
 			assert.Equal(t, tt.want, match(tt.target, tt.data))
 		})
 	}

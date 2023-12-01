@@ -34,7 +34,6 @@ func (p *mqttBroker) Topic(topicName string) broker.Topic {
 
 func (p *mqttBroker) Run(ctx context.Context, cancel context.CancelFunc) {
 	token := p.client.Connect()
-	// go func() {
 	select {
 	case <-token.Done():
 		if err := token.Error(); err != nil {
@@ -46,13 +45,13 @@ func (p *mqttBroker) Run(ctx context.Context, cancel context.CancelFunc) {
 	case <-ctx.Done():
 		p.client.Disconnect(0)
 	}
-	//}()
 }
 
 func (t *mqttTopic) publishInternal(data string) {
 	token := t.client.Publish(t.topic, 1, false, data)
 	go func() {
 		token.Wait()
+
 		if err := token.Error(); err != nil {
 			log.Errorf("Error on Publish to %s: %s", t.topic, err)
 		} else {
@@ -69,18 +68,21 @@ func (t *mqttTopic) Publish(data any) {
 	b, err := json.Marshal(data)
 	if err != nil {
 		log.Errorf("Error on Publish, cannot marshal JSON: %s", err)
+
 		return
 	}
 
 	t.publishInternal(string(b))
 }
 
-func (t *mqttTopic) SubscribeRawJson(callback broker.CallbackFunction) {
+func (t *mqttTopic) SubscribeRawJSON(callback broker.CallbackFunction) {
 	internalCallback := func(client mqtt.Client, message mqtt.Message) {
 		var raw any
+
 		err := json.Unmarshal(message.Payload(), &raw)
 		if err != nil {
 			log.Errorf("Cannot unmarshal {%s}: %s", message.Payload(), err)
+
 			return
 		}
 
@@ -94,11 +96,13 @@ func (t *mqttTopic) SubscribeRawJson(callback broker.CallbackFunction) {
 func (t *mqttTopic) Subscribe(hint any, callback broker.CallbackFunction) {
 	internalCallback := func(client mqtt.Client, message mqtt.Message) {
 		log.Debugf("got MQTT message: %s", message.Payload())
+
 		payload := reflect.New(reflect.TypeOf(hint))
 
 		err := json.Unmarshal(message.Payload(), payload.Interface())
 		if err != nil {
 			log.Errorf("Cannot unmarshal {%s} into %s: %s", message.Payload(), reflect.TypeOf(hint), err)
+
 			return
 		}
 
@@ -113,6 +117,7 @@ func (t *mqttTopic) subscribeInternal(internalCallback func(client mqtt.Client, 
 	token := t.client.Subscribe(t.topic, 0, internalCallback)
 	go func() {
 		token.Wait()
+
 		if err := token.Error(); err != nil {
 			log.Errorf("Error on Subscribe to %s: %s", t.topic, err)
 		} else {

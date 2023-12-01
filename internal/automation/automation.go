@@ -4,10 +4,11 @@ import (
 	"context"
 	"reflect"
 
+	"gopkg.in/yaml.v2"
+
 	"github.com/MyChaOS87/automqttion.git/config"
 	"github.com/MyChaOS87/automqttion.git/pkg/broker"
 	"github.com/MyChaOS87/automqttion.git/pkg/log"
-	"gopkg.in/yaml.v2"
 )
 
 type Automation interface {
@@ -25,9 +26,9 @@ type automation struct {
 	broker   broker.Broker
 }
 
-func (a *automation) Start(ctx context.Context, cancel context.CancelFunc) {
+func (a *automation) Start(_ context.Context, _ context.CancelFunc) {
 	a.broker.Topic(a.topic).
-		SubscribeRawJson(func(topic string, data interface{}) {
+		SubscribeRawJSON(func(topic string, data interface{}) {
 			for _, matcher := range a.matchers {
 				if match(matcher.match, dereference(data)) {
 					for _, publisher := range matcher.publishers {
@@ -43,7 +44,9 @@ func replaceIfYamlMatcher(m any) any {
 	if val.Kind() != reflect.Map {
 		return m
 	}
+
 	iter := val.MapRange()
+
 	for iter.Next() {
 		k := iter.Key()
 		v := iter.Value()
@@ -54,6 +57,7 @@ func replaceIfYamlMatcher(m any) any {
 
 		if reflect.DeepEqual(k.Interface(), "$yaml") {
 			var newVal map[string]any
+
 			s, ok := v.Interface().(string)
 			if !ok {
 				log.Fatalf("$yaml element can only hold a string")

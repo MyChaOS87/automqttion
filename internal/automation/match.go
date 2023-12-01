@@ -14,6 +14,7 @@ func match(target, data any) bool {
 				return false
 			}
 		}
+
 		return true
 	} else if reflect.TypeOf(target) == reflect.TypeOf(data) {
 		return reflect.DeepEqual(target, data)
@@ -28,6 +29,7 @@ func isNumeric(v any) bool {
 		float32, float64:
 		return true
 	}
+
 	return false
 }
 

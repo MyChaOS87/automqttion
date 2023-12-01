@@ -26,12 +26,12 @@ func (nullBroker) Topic(string) broker.Topic {
 func (nullTopic) Publish(interface{}) {
 }
 
-func (nullTopic) PublishString(string) {}
+func (nullTopic) PublishString(_ string) {}
 
-func (nullTopic) Subscribe(hint interface{}, callback broker.CallbackFunction) {
+func (nullTopic) Subscribe(_ interface{}, _ broker.CallbackFunction) {
 }
 
-func (nullTopic) SubscribeRawJson(callback broker.CallbackFunction) {
+func (nullTopic) SubscribeRawJSON(_ broker.CallbackFunction) {
 }
 
 func NewBroker() broker.Broker {
