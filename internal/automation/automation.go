@@ -14,19 +14,25 @@ type Automation interface {
 	Start(ctx context.Context, cancel context.CancelFunc)
 }
 
+type matcher struct {
+	match      any
+	publishers []publisher
+}
+
 type automation struct {
-	cfg    config.AutomateConfig
-	broker broker.Broker
+	topic    string
+	matchers []matcher
+	broker   broker.Broker
 }
 
 func (a *automation) Start(ctx context.Context, cancel context.CancelFunc) {
-	matcher := replaceIfYamlMatcher(a.cfg.On.Match)
-
-	a.broker.Topic(a.cfg.On.Topic).
+	a.broker.Topic(a.topic).
 		SubscribeRawJson(func(topic string, data interface{}) {
-			if match(matcher, dereference(data)) {
-				for _, action := range a.cfg.Do {
-					a.broker.Topic(action.Topic).Publish(action.Object)
+			for _, matcher := range a.matchers {
+				if match(matcher.match, dereference(data)) {
+					for _, publisher := range matcher.publishers {
+						publisher.Publish()
+					}
 				}
 			}
 		})
@@ -74,9 +80,24 @@ func dereference(a any) any {
 	return a
 }
 
-func NewAutomation(broker broker.Broker, cfg config.AutomateConfig) Automation {
+func NewAutomation(broker broker.Broker, topic string, matchersConfig []config.MatchConfig) Automation {
+	matchers := make([]matcher, 0, len(matchersConfig))
+
+	for _, cfg := range matchersConfig {
+		publishers := make([]publisher, 0, len(cfg.Actions))
+		for _, action := range cfg.Actions {
+			publishers = append(publishers, newPublisher(broker.Topic(action.Topic), action.Content))
+		}
+
+		matchers = append(matchers, matcher{
+			match:      replaceIfYamlMatcher(cfg.Match),
+			publishers: publishers,
+		})
+	}
+
 	return &automation{
-		cfg:    cfg,
-		broker: broker,
+		topic:    topic,
+		matchers: matchers,
+		broker:   broker,
 	}
 }
