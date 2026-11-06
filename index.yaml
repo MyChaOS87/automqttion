@@ -2,6 +2,16 @@ apiVersion: v1
 entries:
   automqttion:
   - apiVersion: v2
+    appVersion: 0.0.3
+    created: "2026-11-06T22:38:11.031774116Z"
+    description: A Helm chart for Kubernetes
+    digest: 7d68e0f6820e0cc60908bbd8df6afc7a7a4678b2acc68b97b51f631fae5ed326
+    name: automqttion
+    type: application
+    urls:
+    - https://github.com/MyChaOS87/automqttion/releases/download/automqttion-0.0.3/automqttion-0.0.3.tgz
+    version: 0.0.3
+  - apiVersion: v2
     appVersion: main
     created: "2023-12-10T18:08:58.904631834Z"
     description: A Helm chart for Kubernetes
@@ -21,4 +31,4 @@ entries:
     urls:
     - https://github.com/MyChaOS87/automqttion/releases/download/automqttion-0.0.1/automqttion-0.0.1.tgz
     version: 0.0.1
-generated: "2023-12-10T18:08:58.904644367Z"
+generated: "2026-11-06T22:38:11.031796759Z"
