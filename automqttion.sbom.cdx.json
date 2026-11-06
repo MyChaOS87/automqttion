@@ -192,12 +192,12 @@
       ]
     },
     {
-      "bom-ref": "pkg:github/docker/build-push-action@v5.0.0?package-id=0a101857b0357c36",
+      "bom-ref": "pkg:github/docker/build-push-action@v6.15.0?package-id=d2e95d908f84d397",
       "type": "library",
       "name": "docker/build-push-action",
-      "version": "v5.0.0",
-      "cpe": "cpe:2.3:a:docker\\/build-push-action:docker\\/build-push-action:v5.0.0:*:*:*:*:*:*:*",
-      "purl": "pkg:github/docker/build-push-action@v5.0.0",
+      "version": "v6.15.0",
+      "cpe": "cpe:2.3:a:docker\\/build-push-action:docker\\/build-push-action:v6.15.0:*:*:*:*:*:*:*",
+      "purl": "pkg:github/docker/build-push-action@v6.15.0",
       "properties": [
         {
           "name": "syft:package:foundBy",
@@ -213,39 +213,39 @@
         },
         {
           "name": "syft:cpe23",
-          "value": "cpe:2.3:a:docker\\/build-push-action:docker\\/build_push_action:v5.0.0:*:*:*:*:*:*:*"
+          "value": "cpe:2.3:a:docker\\/build-push-action:docker\\/build_push_action:v6.15.0:*:*:*:*:*:*:*"
         },
         {
           "name": "syft:cpe23",
-          "value": "cpe:2.3:a:docker\\/build_push_action:docker\\/build-push-action:v5.0.0:*:*:*:*:*:*:*"
+          "value": "cpe:2.3:a:docker\\/build_push_action:docker\\/build-push-action:v6.15.0:*:*:*:*:*:*:*"
         },
         {
           "name": "syft:cpe23",
-          "value": "cpe:2.3:a:docker\\/build_push_action:docker\\/build_push_action:v5.0.0:*:*:*:*:*:*:*"
+          "value": "cpe:2.3:a:docker\\/build_push_action:docker\\/build_push_action:v6.15.0:*:*:*:*:*:*:*"
         },
         {
           "name": "syft:cpe23",
-          "value": "cpe:2.3:a:docker\\/build-push:docker\\/build-push-action:v5.0.0:*:*:*:*:*:*:*"
+          "value": "cpe:2.3:a:docker\\/build-push:docker\\/build-push-action:v6.15.0:*:*:*:*:*:*:*"
         },
         {
           "name": "syft:cpe23",
-          "value": "cpe:2.3:a:docker\\/build-push:docker\\/build_push_action:v5.0.0:*:*:*:*:*:*:*"
+          "value": "cpe:2.3:a:docker\\/build-push:docker\\/build_push_action:v6.15.0:*:*:*:*:*:*:*"
         },
         {
           "name": "syft:cpe23",
-          "value": "cpe:2.3:a:docker\\/build_push:docker\\/build-push-action:v5.0.0:*:*:*:*:*:*:*"
+          "value": "cpe:2.3:a:docker\\/build_push:docker\\/build-push-action:v6.15.0:*:*:*:*:*:*:*"
         },
         {
           "name": "syft:cpe23",
-          "value": "cpe:2.3:a:docker\\/build_push:docker\\/build_push_action:v5.0.0:*:*:*:*:*:*:*"
+          "value": "cpe:2.3:a:docker\\/build_push:docker\\/build_push_action:v6.15.0:*:*:*:*:*:*:*"
         },
         {
           "name": "syft:cpe23",
-          "value": "cpe:2.3:a:docker\\/build:docker\\/build-push-action:v5.0.0:*:*:*:*:*:*:*"
+          "value": "cpe:2.3:a:docker\\/build:docker\\/build-push-action:v6.15.0:*:*:*:*:*:*:*"
         },
         {
           "name": "syft:cpe23",
-          "value": "cpe:2.3:a:docker\\/build:docker\\/build_push_action:v5.0.0:*:*:*:*:*:*:*"
+          "value": "cpe:2.3:a:docker\\/build:docker\\/build_push_action:v6.15.0:*:*:*:*:*:*:*"
         },
         {
           "name": "syft:location:0:path",
@@ -254,12 +254,12 @@
       ]
     },
     {
-      "bom-ref": "pkg:github/docker/login-action@v3.0.0?package-id=10fc1372675e1cfb",
+      "bom-ref": "pkg:github/docker/login-action@v3.4.0?package-id=23db85038bee92b5",
       "type": "library",
       "name": "docker/login-action",
-      "version": "v3.0.0",
-      "cpe": "cpe:2.3:a:docker\\/login-action:docker\\/login-action:v3.0.0:*:*:*:*:*:*:*",
-      "purl": "pkg:github/docker/login-action@v3.0.0",
+      "version": "v3.4.0",
+      "cpe": "cpe:2.3:a:docker\\/login-action:docker\\/login-action:v3.4.0:*:*:*:*:*:*:*",
+      "purl": "pkg:github/docker/login-action@v3.4.0",
       "properties": [
         {
           "name": "syft:package:foundBy",
@@ -275,23 +275,23 @@
         },
         {
           "name": "syft:cpe23",
-          "value": "cpe:2.3:a:docker\\/login-action:docker\\/login_action:v3.0.0:*:*:*:*:*:*:*"
+          "value": "cpe:2.3:a:docker\\/login-action:docker\\/login_action:v3.4.0:*:*:*:*:*:*:*"
         },
         {
           "name": "syft:cpe23",
-          "value": "cpe:2.3:a:docker\\/login_action:docker\\/login-action:v3.0.0:*:*:*:*:*:*:*"
+          "value": "cpe:2.3:a:docker\\/login_action:docker\\/login-action:v3.4.0:*:*:*:*:*:*:*"
         },
         {
           "name": "syft:cpe23",
-          "value": "cpe:2.3:a:docker\\/login_action:docker\\/login_action:v3.0.0:*:*:*:*:*:*:*"
+          "value": "cpe:2.3:a:docker\\/login_action:docker\\/login_action:v3.4.0:*:*:*:*:*:*:*"
         },
         {
           "name": "syft:cpe23",
-          "value": "cpe:2.3:a:docker\\/login:docker\\/login-action:v3.0.0:*:*:*:*:*:*:*"
+          "value": "cpe:2.3:a:docker\\/login:docker\\/login-action:v3.4.0:*:*:*:*:*:*:*"
         },
         {
           "name": "syft:cpe23",
-          "value": "cpe:2.3:a:docker\\/login:docker\\/login_action:v3.0.0:*:*:*:*:*:*:*"
+          "value": "cpe:2.3:a:docker\\/login:docker\\/login_action:v3.4.0:*:*:*:*:*:*:*"
         },
         {
           "name": "syft:location:0:path",
@@ -300,12 +300,12 @@
       ]
     },
     {
-      "bom-ref": "pkg:github/docker/metadata-action@v5.0.0?package-id=1d3c2a5a1eb753c9",
+      "bom-ref": "pkg:github/docker/metadata-action@v5.7.0?package-id=075425fd8f599645",
       "type": "library",
       "name": "docker/metadata-action",
-      "version": "v5.0.0",
-      "cpe": "cpe:2.3:a:docker\\/metadata-action:docker\\/metadata-action:v5.0.0:*:*:*:*:*:*:*",
-      "purl": "pkg:github/docker/metadata-action@v5.0.0",
+      "version": "v5.7.0",
+      "cpe": "cpe:2.3:a:docker\\/metadata-action:docker\\/metadata-action:v5.7.0:*:*:*:*:*:*:*",
+      "purl": "pkg:github/docker/metadata-action@v5.7.0",
       "properties": [
         {
           "name": "syft:package:foundBy",
@@ -321,23 +321,23 @@
         },
         {
           "name": "syft:cpe23",
-          "value": "cpe:2.3:a:docker\\/metadata-action:docker\\/metadata_action:v5.0.0:*:*:*:*:*:*:*"
+          "value": "cpe:2.3:a:docker\\/metadata-action:docker\\/metadata_action:v5.7.0:*:*:*:*:*:*:*"
         },
         {
           "name": "syft:cpe23",
-          "value": "cpe:2.3:a:docker\\/metadata_action:docker\\/metadata-action:v5.0.0:*:*:*:*:*:*:*"
+          "value": "cpe:2.3:a:docker\\/metadata_action:docker\\/metadata-action:v5.7.0:*:*:*:*:*:*:*"
         },
         {
           "name": "syft:cpe23",
-          "value": "cpe:2.3:a:docker\\/metadata_action:docker\\/metadata_action:v5.0.0:*:*:*:*:*:*:*"
+          "value": "cpe:2.3:a:docker\\/metadata_action:docker\\/metadata_action:v5.7.0:*:*:*:*:*:*:*"
         },
         {
           "name": "syft:cpe23",
-          "value": "cpe:2.3:a:docker\\/metadata:docker\\/metadata-action:v5.0.0:*:*:*:*:*:*:*"
+          "value": "cpe:2.3:a:docker\\/metadata:docker\\/metadata-action:v5.7.0:*:*:*:*:*:*:*"
         },
         {
           "name": "syft:cpe23",
-          "value": "cpe:2.3:a:docker\\/metadata:docker\\/metadata_action:v5.0.0:*:*:*:*:*:*:*"
+          "value": "cpe:2.3:a:docker\\/metadata:docker\\/metadata_action:v5.7.0:*:*:*:*:*:*:*"
         },
         {
           "name": "syft:location:0:path",
@@ -346,12 +346,12 @@
       ]
     },
     {
-      "bom-ref": "pkg:github/docker/setup-buildx-action@v3.0.0?package-id=13ea73b8c15b43ee",
+      "bom-ref": "pkg:github/docker/setup-buildx-action@v3.10.0?package-id=40c6684e6615b142",
       "type": "library",
       "name": "docker/setup-buildx-action",
-      "version": "v3.0.0",
-      "cpe": "cpe:2.3:a:docker\\/setup-buildx-action:docker\\/setup-buildx-action:v3.0.0:*:*:*:*:*:*:*",
-      "purl": "pkg:github/docker/setup-buildx-action@v3.0.0",
+      "version": "v3.10.0",
+      "cpe": "cpe:2.3:a:docker\\/setup-buildx-action:docker\\/setup-buildx-action:v3.10.0:*:*:*:*:*:*:*",
+      "purl": "pkg:github/docker/setup-buildx-action@v3.10.0",
       "properties": [
         {
           "name": "syft:package:foundBy",
@@ -367,39 +367,39 @@
         },
         {
           "name": "syft:cpe23",
-          "value": "cpe:2.3:a:docker\\/setup-buildx-action:docker\\/setup_buildx_action:v3.0.0:*:*:*:*:*:*:*"
+          "value": "cpe:2.3:a:docker\\/setup-buildx-action:docker\\/setup_buildx_action:v3.10.0:*:*:*:*:*:*:*"
         },
         {
           "name": "syft:cpe23",
-          "value": "cpe:2.3:a:docker\\/setup_buildx_action:docker\\/setup-buildx-action:v3.0.0:*:*:*:*:*:*:*"
+          "value": "cpe:2.3:a:docker\\/setup_buildx_action:docker\\/setup-buildx-action:v3.10.0:*:*:*:*:*:*:*"
         },
         {
           "name": "syft:cpe23",
-          "value": "cpe:2.3:a:docker\\/setup_buildx_action:docker\\/setup_buildx_action:v3.0.0:*:*:*:*:*:*:*"
+          "value": "cpe:2.3:a:docker\\/setup_buildx_action:docker\\/setup_buildx_action:v3.10.0:*:*:*:*:*:*:*"
         },
         {
           "name": "syft:cpe23",
-          "value": "cpe:2.3:a:docker\\/setup-buildx:docker\\/setup-buildx-action:v3.0.0:*:*:*:*:*:*:*"
+          "value": "cpe:2.3:a:docker\\/setup-buildx:docker\\/setup-buildx-action:v3.10.0:*:*:*:*:*:*:*"
         },
         {
           "name": "syft:cpe23",
-          "value": "cpe:2.3:a:docker\\/setup-buildx:docker\\/setup_buildx_action:v3.0.0:*:*:*:*:*:*:*"
+          "value": "cpe:2.3:a:docker\\/setup-buildx:docker\\/setup_buildx_action:v3.10.0:*:*:*:*:*:*:*"
         },
         {
           "name": "syft:cpe23",
-          "value": "cpe:2.3:a:docker\\/setup_buildx:docker\\/setup-buildx-action:v3.0.0:*:*:*:*:*:*:*"
+          "value": "cpe:2.3:a:docker\\/setup_buildx:docker\\/setup-buildx-action:v3.10.0:*:*:*:*:*:*:*"
         },
         {
           "name": "syft:cpe23",
-          "value": "cpe:2.3:a:docker\\/setup_buildx:docker\\/setup_buildx_action:v3.0.0:*:*:*:*:*:*:*"
+          "value": "cpe:2.3:a:docker\\/setup_buildx:docker\\/setup_buildx_action:v3.10.0:*:*:*:*:*:*:*"
         },
         {
           "name": "syft:cpe23",
-          "value": "cpe:2.3:a:docker\\/setup:docker\\/setup-buildx-action:v3.0.0:*:*:*:*:*:*:*"
+          "value": "cpe:2.3:a:docker\\/setup:docker\\/setup-buildx-action:v3.10.0:*:*:*:*:*:*:*"
         },
         {
           "name": "syft:cpe23",
-          "value": "cpe:2.3:a:docker\\/setup:docker\\/setup_buildx_action:v3.0.0:*:*:*:*:*:*:*"
+          "value": "cpe:2.3:a:docker\\/setup:docker\\/setup_buildx_action:v3.10.0:*:*:*:*:*:*:*"
         },
         {
           "name": "syft:location:0:path",
@@ -1977,12 +1977,12 @@
       ]
     },
     {
-      "bom-ref": "pkg:github/sigstore/cosign-installer@v3.1.1?package-id=35971b0ba1f8cf90",
+      "bom-ref": "pkg:github/sigstore/cosign-installer@v3.8.1?package-id=0e1b9a735c8bb188",
       "type": "library",
       "name": "sigstore/cosign-installer",
-      "version": "v3.1.1",
-      "cpe": "cpe:2.3:a:sigstore\\/cosign-installer:sigstore\\/cosign-installer:v3.1.1:*:*:*:*:*:*:*",
-      "purl": "pkg:github/sigstore/cosign-installer@v3.1.1",
+      "version": "v3.8.1",
+      "cpe": "cpe:2.3:a:sigstore\\/cosign-installer:sigstore\\/cosign-installer:v3.8.1:*:*:*:*:*:*:*",
+      "purl": "pkg:github/sigstore/cosign-installer@v3.8.1",
       "properties": [
         {
           "name": "syft:package:foundBy",
@@ -1998,23 +1998,23 @@
         },
         {
           "name": "syft:cpe23",
-          "value": "cpe:2.3:a:sigstore\\/cosign-installer:sigstore\\/cosign_installer:v3.1.1:*:*:*:*:*:*:*"
+          "value": "cpe:2.3:a:sigstore\\/cosign-installer:sigstore\\/cosign_installer:v3.8.1:*:*:*:*:*:*:*"
         },
         {
           "name": "syft:cpe23",
-          "value": "cpe:2.3:a:sigstore\\/cosign_installer:sigstore\\/cosign-installer:v3.1.1:*:*:*:*:*:*:*"
+          "value": "cpe:2.3:a:sigstore\\/cosign_installer:sigstore\\/cosign-installer:v3.8.1:*:*:*:*:*:*:*"
         },
         {
           "name": "syft:cpe23",
-          "value": "cpe:2.3:a:sigstore\\/cosign_installer:sigstore\\/cosign_installer:v3.1.1:*:*:*:*:*:*:*"
+          "value": "cpe:2.3:a:sigstore\\/cosign_installer:sigstore\\/cosign_installer:v3.8.1:*:*:*:*:*:*:*"
         },
         {
           "name": "syft:cpe23",
-          "value": "cpe:2.3:a:sigstore\\/cosign:sigstore\\/cosign-installer:v3.1.1:*:*:*:*:*:*:*"
+          "value": "cpe:2.3:a:sigstore\\/cosign:sigstore\\/cosign-installer:v3.8.1:*:*:*:*:*:*:*"
         },
         {
           "name": "syft:cpe23",
-          "value": "cpe:2.3:a:sigstore\\/cosign:sigstore\\/cosign_installer:v3.1.1:*:*:*:*:*:*:*"
+          "value": "cpe:2.3:a:sigstore\\/cosign:sigstore\\/cosign_installer:v3.8.1:*:*:*:*:*:*:*"
         },
         {
           "name": "syft:location:0:path",
@@ -2029,11 +2029,11 @@
       "hashes": [
         {
           "alg": "SHA-1",
-          "content": "8a031d86f0ef8f6b3e121ec7947aa395c207b695"
+          "content": "d847e52f244a42cd07281c047068526a9d9a5d59"
         },
         {
           "alg": "SHA-256",
-          "content": "66a99b549607f1461eb2dbca40bd4b975af91d0decb39983c594b44dcabf5f9e"
+          "content": "8e27e716463d52e3fb51e1839db00b371f9e8978b231d7e01c763aa064e78659"
         }
       ]
     },
