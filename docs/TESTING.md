@@ -86,8 +86,6 @@ A comprehensive codebase audit reveals significant coverage gaps and convention 
 
 | Package | Status | Finding & Compliance Gap |
 |---|---|---|
-| [`internal/automation/automation.go`](./internal/automation/automation.go) | 0% Coverage | Untested. [`NewAutomation`](./internal/automation/automation.go#L87), [`Start`](./internal/automation/automation.go#L29), [`replaceIfYamlMatcher`](./internal/automation/automation.go#L42), and [`dereference`](./internal/automation/automation.go#L78) have no automated tests. |
-| [`internal/automation/publisher.go`](./internal/automation/publisher.go) | 0% Coverage | Untested. [`newPublisher`](./internal/automation/publisher.go#L49), [`jsonPublisher`](./internal/automation/publisher.go#L29), and [`plainPublisher`](./internal/automation/publisher.go#L39) have no automated tests. |
 | [`config`](./config) | 0% Coverage | Untested. [`LoadConfig`](./config/config.go#L42), [`ParseConfig`](./config/config.go#L65), and environment variable overrides have no automated tests. |
 | [`pkg/broker/mqtt`](./pkg/broker/mqtt) | 0% Coverage | Untested. Functional options ([`Broker`](./pkg/broker/mqtt/options.go#L16), [`TLS`](./pkg/broker/mqtt/options.go#L22)), client constructor, and message publishing have no tests. |
 | [`pkg/broker/null`](./pkg/broker/null) | 0% Coverage | Untested. No-op methods of [`nullBroker`](./pkg/broker/null/nullBroker.go#L10) and [`nullTopic`](./pkg/broker/null/nullBroker.go#L11) are not verified. |
@@ -99,15 +97,6 @@ A comprehensive codebase audit reveals significant coverage gaps and convention 
 ## Tracked Backlog Items
 
 The following testing alignment and architectural backlog items are tracked privately on GitHub Project #1 (`private-backlog`):
-
-### Issue #18: Add tabular unit tests for YAML matcher expansion, publisher dispatch, and automation wiring
-- **Location**: [`internal/automation/automation.go`](./internal/automation/automation.go), [`internal/automation/publisher.go`](./internal/automation/publisher.go)
-- **Scope**:
-  - Add unit tests for `replaceIfYamlMatcher`: valid YAML string expansion, non-map inputs, and non-string errors.
-  - Add unit tests for `newPublisher`: verify `$plain` creates `plainPublisher`, `$json` creates `jsonPublisher`, and untagged map falls back to `jsonPublisher`.
-  - Add fake `broker.Topic` test fixture to capture `PublishString` and `Publish` invocations and assert dispatched payload bytes.
-  - Add unit tests for `dereference`: pointer to int, pointer to struct, and non-pointer primitives.
-  - Add unit test for `automation.Start`: verify inbound topic message invokes matching publishers.
 
 ### Issue #19: Add unit tests for config loader, logger factory, and MQTT options
 - **Location**: [`config/config.go`](./config/config.go), [`pkg/log/zap_logger.go`](./pkg/log/zap_logger.go), [`pkg/broker/mqtt/options.go`](./pkg/broker/mqtt/options.go)
