@@ -1,0 +1,142 @@
+# automqttion Test Philosophy & Compliance
+
+This document describes the testing standards, test architecture tiers, test mechanics, testing compliance audit, and tracked backlog items for `automqttion`.
+
+---
+
+## Output-Oriented Tabular Testing Philosophy
+
+Event-driven automation rules and payload matchers must be verified through **output-oriented assertions** rather than mock interaction choreography:
+
+1. **Assert Concrete Outputs & States**: Supply input payloads and target patterns, then assert the exact boolean match result, the published message string, or the marshaled JSON bytes.
+2. **Avoid Callback Mock Choreography**: Do not use `testify/mock` to verify internal callback invocation counts. Instead, pass a lightweight test closure or channel that records dispatched messages, and assert directly against the captured collection.
+3. **Table-Driven Structure**: Organize tests in tabular format:
+   ```go
+   tests := []struct {
+       name     string
+       target   any
+       data     any
+       expected bool
+   }{ ... }
+   ```
+
+---
+
+## 3-Tier Testing Architecture
+
+```
++----------------------------------------------------------------------+
+| Tier 3: Containerized Integration Tests (Optional)                   |
+| Real Mosquitto MQTT broker via Podman / Testcontainers               |
++----------------------------------------------------------------------+
+| Tier 2: In-Memory Component & Pipeline Fakes                         |
+| null.NewBroker(), in-memory broker channel fixtures, context cancel  |
++----------------------------------------------------------------------+
+| Tier 1: Pure Matcher, Expander, & Config Tabular Unit Tests          |
+| match(), numericEqual(), replaceIfYamlMatcher(), newPublisher()      |
++----------------------------------------------------------------------+
+```
+
+### Tier 1: Pure Matcher, Expander, & Config Tabular Tests
+- **Scope**: Pattern matching ([`match`](./internal/automation/match.go#L5)), numeric coercion ([`numericEqual`](./internal/automation/match.go#L36)), YAML expander ([`replaceIfYamlMatcher`](./internal/automation/automation.go#L42)), publisher selection ([`newPublisher`](./internal/automation/publisher.go#L49)), and configuration parsing ([`config.ParseConfig`](./config/config.go#L65)).
+- **Characteristics**: 100% in-memory, deterministic, zero network or filesystem dependencies, executes in milliseconds.
+- **Target Packages**: [`internal/automation`](./internal/automation), [`config`](./config), [`pkg/log`](./pkg/log).
+
+### Tier 2: In-Memory Component Fakes
+- **Scope**: Verifying [`automation.Automation`](./internal/automation/automation.go#L14) event loops, topic dispatch, and context cancellation without real network sockets.
+- **Fixtures**: Use [`null.NewBroker()`](./pkg/broker/null/nullBroker.go#L37) or lightweight channel-based fakes implementing [`broker.Broker`](./pkg/broker/broker.go#L5) and [`broker.Topic`](./pkg/broker/broker.go#L10) to capture published messages.
+
+### Tier 3: Container Integration Tests
+- **Scope**: Live end-to-end MQTT connectivity using an external Mosquitto broker container.
+- **Execution**: Triggered in CI workflows or on demand. Verifies Paho MQTT connection, QoS 0/1 handling, and network disconnect recovery.
+
+---
+
+## Mandatory Test Mechanics
+
+1. **Black-Box Test Packages**: Always define tests in a separate black-box test package (`package <pkg>_test`, e.g., `package automation_test`, `package config_test`). Only export internal helpers via `export_test.go` if strictly necessary.
+2. **Parallel Execution (`t.Parallel()`)**:
+   - Every top-level test function must invoke `t.Parallel()`.
+   - Every subtest within table loops must invoke `t.Parallel()`.
+   ```go
+   func TestMatch(t *testing.T) {
+       t.Parallel()
+       for _, tt := range tests {
+           t.Run(tt.name, func(t *testing.T) {
+               t.Parallel()
+               actual := automation.Match(tt.target, tt.data)
+               assert.Equal(t, tt.expected, actual)
+           })
+       }
+   }
+   ```
+3. **Standard Test Context (`t.Context()`)**:
+   - When tests require a `context.Context`, always call `t.Context()`.
+   - Never use `context.Background()` or `context.TODO()` inside tests (enforced by `usetesting.context-background: true` in `.golangci.yml`).
+4. **Assertion Library Standards**:
+   - Use `github.com/stretchr/testify/require` for fatal preconditions (e.g., verifying `require.NoError(t, err)` or `require.NotNil(t, obj)` before dereferencing).
+   - Use `github.com/stretchr/testify/assert` for non-fatal value assertions.
+   - Respect parameter order: `assert.Equal(t, expected, actual)`.
+
+---
+
+## Testing Compliance Audit
+
+A comprehensive codebase audit reveals significant coverage gaps and convention violations that must be addressed:
+
+| Package | Status | Finding & Compliance Gap |
+|---|---|---|
+| [`internal/automation/match_test.go`](./internal/automation/match_test.go) | Non-compliant | Uses `//nolint:testpackage` and white-box `package automation` instead of black-box `package automation_test`. Lacks export boundary testing. |
+| [`internal/automation/automation.go`](./internal/automation/automation.go) | 0% Coverage | Untested. [`NewAutomation`](./internal/automation/automation.go#L87), [`Start`](./internal/automation/automation.go#L29), [`replaceIfYamlMatcher`](./internal/automation/automation.go#L42), and [`dereference`](./internal/automation/automation.go#L78) have no automated tests. |
+| [`internal/automation/publisher.go`](./internal/automation/publisher.go) | 0% Coverage | Untested. [`newPublisher`](./internal/automation/publisher.go#L49), [`jsonPublisher`](./internal/automation/publisher.go#L29), and [`plainPublisher`](./internal/automation/publisher.go#L39) have no automated tests. |
+| [`config`](./config) | 0% Coverage | Untested. [`LoadConfig`](./config/config.go#L42), [`ParseConfig`](./config/config.go#L65), and environment variable overrides have no automated tests. |
+| [`pkg/broker/mqtt`](./pkg/broker/mqtt) | 0% Coverage | Untested. Functional options ([`Broker`](./pkg/broker/mqtt/options.go#L16), [`TLS`](./pkg/broker/mqtt/options.go#L22)), client constructor, and message publishing have no tests. |
+| [`pkg/broker/null`](./pkg/broker/null) | 0% Coverage | Untested. No-op methods of [`nullBroker`](./pkg/broker/null/nullBroker.go#L10) and [`nullTopic`](./pkg/broker/null/nullBroker.go#L11) are not verified. |
+| [`pkg/log`](./pkg/log) & [`pkg/log/config`](./pkg/log/config) | 0% Coverage | Untested. Logger initialization ([`NewLogger`](./pkg/log/zap_logger.go#L37), [`InitLogger`](./pkg/log/zap_logger.go#L52)), level parsing, and console/JSON encoding toggles have no tests. |
+| [`internal/cmd`](./internal/cmd) | 0% Coverage | Untested. [`Init`](./internal/cmd/init.go#L18) signal handling and context cancellation have no tests. |
+
+---
+
+## Tracked Backlog Items
+
+The following testing alignment and architectural backlog items are tracked privately on GitHub Project #1 (`private-backlog`):
+
+### Issue #17: Migrate payload matcher test suite to black-box tabular format
+- **Location**: [`internal/automation/match_test.go`](./internal/automation/match_test.go)
+- **Scope**:
+  - Remove `//nolint:testpackage` and transition package to `package automation_test`.
+  - Export `Match` (or provide `export_test.go` bridging for `match`) to test public package contract.
+  - Expand test matrix with additional edge cases: boolean values, empty strings, slice matching, negative numbers, and `nil` target vs non-nil data.
+  - Enforce `t.Parallel()` and `assert.Equal(t, tt.expected, actual)`.
+
+### Issue #18: Add tabular unit tests for YAML matcher expansion, publisher dispatch, and automation wiring
+- **Location**: [`internal/automation/automation.go`](./internal/automation/automation.go), [`internal/automation/publisher.go`](./internal/automation/publisher.go)
+- **Scope**:
+  - Add unit tests for `replaceIfYamlMatcher`: valid YAML string expansion, non-map inputs, and non-string errors.
+  - Add unit tests for `newPublisher`: verify `$plain` creates `plainPublisher`, `$json` creates `jsonPublisher`, and untagged map falls back to `jsonPublisher`.
+  - Add fake `broker.Topic` test fixture to capture `PublishString` and `Publish` invocations and assert dispatched payload bytes.
+  - Add unit tests for `dereference`: pointer to int, pointer to struct, and non-pointer primitives.
+  - Add unit test for `automation.Start`: verify inbound topic message invokes matching publishers.
+
+### Issue #19: Add unit tests for config loader, logger factory, and MQTT options
+- **Location**: [`config/config.go`](./config/config.go), [`pkg/log/zap_logger.go`](./pkg/log/zap_logger.go), [`pkg/broker/mqtt/options.go`](./pkg/broker/mqtt/options.go)
+- **Scope**:
+  - Tabular tests for `LoadConfig` with valid YAML file, non-existent file (`ErrConfigFileNotFound`), and invalid YAML syntax.
+  - Test `AUTOMQTTION_*` environment variable overrides via Viper.
+  - Test `NewLogger` with `development: true/false`, console vs JSON encoding, and invalid log level fallbacks.
+  - Test functional options `mqtt.Broker()` and `mqtt.TLS()` on `mqtt.Config`.
+
+### Issue #20: Add unit and boundary tests for null and MQTT message brokers
+- **Location**: [`pkg/broker/null/nullBroker.go`](./pkg/broker/null/nullBroker.go), [`pkg/broker/mqtt/mqttBroker.go`](./pkg/broker/mqtt/mqttBroker.go)
+- **Scope**:
+  - Add unit tests verifying `nullBroker` and `nullTopic` methods execute without panic.
+  - Add unit tests for `mqttTopic.Publish` and `mqttTopic.PublishString` with disconnected client handling.
+  - Verify context cancellation halts `mqttBroker.Run` cleanly.
+
+### Issue #21: Refactor CLI init and YAML matcher parsing to return errors instead of calling log.Fatal
+- **Location**: [`internal/automation/automation.go`](./internal/automation/automation.go#L63), [`internal/cmd/init.go`](./internal/cmd/init.go#L28)
+- **Scope**:
+  - Refactor `replaceIfYamlMatcher(m any) (any, error)` to return errors instead of calling `log.Fatalf`.
+  - Refactor `NewAutomation(..., matchersConfig []config.MatchConfig) (Automation, error)` to propagate configuration errors.
+  - Refactor `cmd.Init()` to return `(context.Context, context.CancelFunc, *config.Config, error)` and remove `log.Printf("FATAL: ...")`.
+  - Update `cmd/automqttion/automqttion.go` to handle returned errors and exit gracefully.

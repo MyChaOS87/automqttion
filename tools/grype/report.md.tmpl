@@ -1,0 +1,107 @@
+{{- $crit := 0 -}}
+{{- $high := 0 -}}
+{{- $med := 0 -}}
+{{- $low := 0 -}}
+{{- $other := 0 -}}
+{{- range .Matches -}}
+  {{- $sev := lower .Vulnerability.Severity -}}
+  {{- if eq $sev "critical" -}}{{- $crit = add1 $crit -}}
+  {{- else if eq $sev "high" -}}{{- $high = add1 $high -}}
+  {{- else if eq $sev "medium" -}}{{- $med = add1 $med -}}
+  {{- else if eq $sev "low" -}}{{- $low = add1 $low -}}
+  {{- else -}}{{- $other = add1 $other -}}
+  {{- end -}}
+{{- end -}}
+# Vulnerability Audit Report
+
+- **Scanner**: `{{ .Descriptor.Name }}` `{{ .Descriptor.Version }}`
+{{- if .Descriptor.Timestamp }}
+- **Generated**: `{{ .Descriptor.Timestamp }}`
+{{- end }}
+{{- if .Source }}
+- **Source Type**: `{{ .Source.Type }}`
+{{- if kindIs "string" .Source.Target }}
+- **Target**: `{{ .Source.Target }}`
+{{- end }}
+{{- end }}
+- **Active Findings**: **{{ len .Matches }}**
+- **Suppressed Findings**: **{{ len .IgnoredMatches }}**
+
+{{- if eq (len .Matches) 0 }}
+
+> **Status: Clean** — Zero active vulnerabilities matched in this scan.
+{{- else }}
+
+## Severity Distribution
+
+| Critical | High | Medium | Low | Negligible / Unknown | Total |
+| :---: | :---: | :---: | :---: | :---: | :---: |
+| {{ $crit }} | {{ $high }} | {{ $med }} | {{ $low }} | {{ $other }} | **{{ len .Matches }}** |
+
+## Active Findings
+
+| Advisory | Severity | Package | Installed | Fix Status | Signals |
+| :--- | :--- | :--- | :--- | :--- | :--- |
+{{- range .Matches }}
+{{- $fixCol := .Vulnerability.Fix.State -}}
+{{- if gt (len .Vulnerability.Fix.Versions) 0 -}}
+  {{- $fixCol = printf "%s (%s)" .Vulnerability.Fix.State (join ", " .Vulnerability.Fix.Versions) -}}
+{{- end -}}
+{{- $sig := "-" -}}
+{{- if gt (len .Vulnerability.KnownExploited) 0 -}}
+  {{- $sig = "KEV" -}}
+{{- else if gt (len .Vulnerability.EPSS) 0 -}}
+  {{- $firstEpss := index .Vulnerability.EPSS 0 -}}
+  {{- $sig = printf "EPSS %.2f%%" (mulf $firstEpss.EPSS 100.0) -}}
+{{- end }}
+| {{ if .Vulnerability.DataSource }}[{{ .Vulnerability.ID }}]({{ .Vulnerability.DataSource }}){{ else }}`{{ .Vulnerability.ID }}`{{ end }} | **{{ default "Unknown" .Vulnerability.Severity }}** | `{{ .Artifact.Name }}` | `{{ .Artifact.Version }}` | `{{ default "unknown" $fixCol }}` | {{ $sig }} |
+{{- end }}
+
+## Triage Details
+
+{{- range .Matches }}
+
+<details>
+<summary><b>{{ .Vulnerability.ID }} — {{ .Artifact.Name }}@{{ .Artifact.Version }} ({{ default "Unknown" .Vulnerability.Severity }})</b></summary>
+
+- **Ecosystem / Type**: `{{ .Artifact.Type }}`{{ if .Artifact.Language }} (`{{ .Artifact.Language }}`){{ end }}
+{{- if .Artifact.PURL }}
+- **PURL**: `{{ .Artifact.PURL }}`
+{{- end }}
+- **Fix State**: `{{ default "unknown" .Vulnerability.Fix.State }}`{{ if gt (len .Vulnerability.Fix.Versions) 0 }} — upgrade to `{{ join "`, `" .Vulnerability.Fix.Versions }}`{{ end }}
+{{- if gt (len .RelatedVulnerabilities) 0 }}
+- **Related IDs**: {{ range $idx, $rel := .RelatedVulnerabilities }}{{ if $idx }}, {{ end }}{{ if $rel.DataSource }}[{{ $rel.ID }}]({{ $rel.DataSource }}){{ else }}`{{ $rel.ID }}`{{ end }}{{ end }}
+{{- end }}
+{{- $desc := .Vulnerability.Description -}}
+{{- if and (not $desc) (gt (len .RelatedVulnerabilities) 0) -}}
+  {{- $desc = (index .RelatedVulnerabilities 0).Description -}}
+{{- end -}}
+{{- if $desc }}
+
+{{ $desc | trim }}
+{{- end }}
+
+</details>
+{{- end }}
+{{- end }}
+
+{{- if gt (len .IgnoredMatches) 0 }}
+
+## Suppressed Findings (`.grype.yaml`)
+
+| Advisory | Severity | Package | Installed | Suppression Rule / Reason |
+| :--- | :--- | :--- | :--- | :--- |
+{{- range .IgnoredMatches }}
+{{- $reasons := list -}}
+{{- range .AppliedIgnoreRules -}}
+  {{- if .Reason -}}
+    {{- $reasons = append $reasons .Reason -}}
+  {{- else if .FixState -}}
+    {{- $reasons = append $reasons (printf "fix-state=%s" .FixState) -}}
+  {{- else if .Vulnerability -}}
+    {{- $reasons = append $reasons (printf "id=%s" .Vulnerability) -}}
+  {{- end -}}
+{{- end }}
+| `{{ .Vulnerability.ID }}` | {{ default "Unknown" .Vulnerability.Severity }} | `{{ .Artifact.Name }}` | `{{ .Artifact.Version }}` | {{ if gt (len $reasons) 0 }}{{ join "; " $reasons | replace "|" "\\|" }}{{ else }}_rule matched_{{ end }} |
+{{- end }}
+{{- end }}

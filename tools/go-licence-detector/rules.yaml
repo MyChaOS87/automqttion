@@ -1,0 +1,12 @@
+{
+  "allowlist": [
+    "Apache-2.0",
+    "MIT",
+    "BSD-3-Clause",
+    "BSD-2-Clause",
+    "ISC",
+    "MPL-2.0",
+    "0BSD",
+    "EPL-2.0"
+  ]
+}

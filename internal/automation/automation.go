@@ -4,11 +4,11 @@ import (
 	"context"
 	"reflect"
 
-	"gopkg.in/yaml.v2"
+	"go.yaml.in/yaml/v3"
 
-	"github.com/MyChaOS87/automqttion.git/config"
-	"github.com/MyChaOS87/automqttion.git/pkg/broker"
-	"github.com/MyChaOS87/automqttion.git/pkg/log"
+	"github.com/MyChaOS87/automqttion/config"
+	"github.com/MyChaOS87/automqttion/pkg/broker"
+	"github.com/MyChaOS87/automqttion/pkg/log"
 )
 
 type Automation interface {
@@ -28,7 +28,7 @@ type automation struct {
 
 func (a *automation) Start(_ context.Context, _ context.CancelFunc) {
 	a.broker.Topic(a.topic).
-		SubscribeRawJSON(func(topic string, data interface{}) {
+		SubscribeRawJSON(func(_ string, data any) {
 			for _, matcher := range a.matchers {
 				if match(matcher.match, dereference(data)) {
 					for _, publisher := range matcher.publishers {

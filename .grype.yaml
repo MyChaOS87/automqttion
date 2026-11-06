@@ -1,0 +1,5 @@
+# Grype vulnerability scanner configuration.
+# Every entry in `ignore:` MUST include an inline justification comment
+# explaining why the vulnerability is not exploitable or how it is mitigated.
+sort-by: severity
+ignore: []

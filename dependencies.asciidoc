@@ -1,0 +1,65 @@
+// Generated documentation. Please do not edit.
+
+[id="{p}-{page_id}"]
+= Third-party dependencies
+
+This page lists the third-party dependencies used to build {n}.
+
+[float]
+[id="{p}-dependencies-direct"]
+== Direct dependencies
+
+[options="header"]
+|===
+| Name | Version | Licence
+
+| link:https://github.com/eclipse/paho.mqtt.golang[$$github.com/eclipse/paho.mqtt.golang$$] | v1.5.1 | EPL-2.0
+| link:https://github.com/spf13/viper[$$github.com/spf13/viper$$] | v1.21.0 | MIT
+| link:https://github.com/stretchr/testify[$$github.com/stretchr/testify$$] | v1.12.1 | MIT
+| link:https://go.uber.org/zap[$$go.uber.org/zap$$] | v1.28.0 | MIT
+| link:https://go.yaml.in/yaml/v3[$$go.yaml.in/yaml/v3$$] | v3.0.6 | MIT
+|===
+
+
+[float]
+[id="{p}-dependencies-indirect"]
+== Indirect dependencies
+
+[options="header"]
+|===
+| Name | Version | Licence
+
+| link:https://github.com/frankban/quicktest[$$github.com/frankban/quicktest$$] | v1.14.6 | MIT
+| link:https://github.com/fsnotify/fsnotify[$$github.com/fsnotify/fsnotify$$] | v1.10.1 | BSD-3-Clause
+| link:https://github.com/go-viper/mapstructure[$$github.com/go-viper/mapstructure/v2$$] | v2.5.0 | MIT
+| link:https://github.com/google/go-cmp[$$github.com/google/go-cmp$$] | v0.6.0 | BSD-3-Clause
+| link:https://github.com/gorilla/websocket[$$github.com/gorilla/websocket$$] | v1.5.3 | BSD-2-Clause
+| link:https://github.com/kr/pretty[$$github.com/kr/pretty$$] | v0.3.1 | MIT
+| link:https://github.com/kr/text[$$github.com/kr/text$$] | v0.2.0 | MIT
+| link:https://github.com/pelletier/go-toml[$$github.com/pelletier/go-toml/v2$$] | v2.4.3 | MIT
+| link:https://github.com/rogpeppe/go-internal[$$github.com/rogpeppe/go-internal$$] | v1.9.0 | BSD-3-Clause
+| link:https://github.com/sagikazarmark/locafero[$$github.com/sagikazarmark/locafero$$] | v0.12.0 | MIT
+| link:https://github.com/spf13/afero[$$github.com/spf13/afero$$] | v1.15.0 | Apache-2.0
+| link:https://github.com/spf13/cast[$$github.com/spf13/cast$$] | v1.10.0 | MIT
+| link:https://github.com/spf13/pflag[$$github.com/spf13/pflag$$] | v1.1.0 | BSD-3-Clause
+| link:https://github.com/subosito/gotenv[$$github.com/subosito/gotenv$$] | v1.6.0 | MIT
+| link:https://go.uber.org/goleak[$$go.uber.org/goleak$$] | v1.3.0 | MIT
+| link:https://go.uber.org/multierr[$$go.uber.org/multierr$$] | v1.11.0 | MIT
+| link:https://golang.org/x/net[$$golang.org/x/net$$] | v0.62.0 | BSD-3-Clause
+| link:https://golang.org/x/sync[$$golang.org/x/sync$$] | v0.24.0 | BSD-3-Clause
+| link:https://golang.org/x/sys[$$golang.org/x/sys$$] | v0.49.0 | BSD-3-Clause
+| link:https://golang.org/x/text[$$golang.org/x/text$$] | v0.43.0 | BSD-3-Clause
+|===
+
+
+[float]
+[id="{p}-dependencies-image"]
+== Container image dependencies
+
+Dependencies included in the {n} container image.
+
+[options="header",format="csv"]
+|===
+Name, Version, Licence, URL
+include::container-image-dependencies.csv[]
+|===

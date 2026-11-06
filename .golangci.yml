@@ -1,79 +1,172 @@
+version: "2"
 linters:
-  # please, do not use `enable-all`: it's deprecated and will be removed soon.
-  # inverted configuration with `enable-all` and `disable` is not scalable during updates of golangci-lint
-  disable-all: true
+  default: none
   enable:
+    - asasalint
     - asciicheck
+    - bidichk
     - bodyclose
+    - canonicalheader
+    - containedctx
+    - copyloopvar
     - cyclop
-    - deadcode
+    - depguard
     - dogsled
     - dupl
     - durationcheck
+    - embeddedstructfieldcheck
+    - err113
+    - errchkjson
     - errcheck
+    - errname
     - errorlint
     - exhaustive
-    - exportloopref
+    - exptostd
     - forbidigo
     - forcetypeassert
     - funlen
-    - gci
+    - gocheckcompilerdirectives
     - gochecknoglobals
     - gochecknoinits
     - gocognit
     - goconst
     - gocritic
     - gocyclo
+    - godoclint
     - godot
     - godox
-    - goerr113
-    - gofmt
-    - gofumpt
     - goheader
-    - goimports
-    - gomnd
-    - gomodguard
+    - gomodguard_v2
     - goprintffuncname
     - gosec
-    - gosimple
     - govet
-    - ifshort
     - importas
     - ineffassign
+    - intrange
     - lll
+    - loggercheck
     - makezero
+    - mirror
     - misspell
+    - mnd
+    - musttag
     - nakedret
     - nestif
     - nilerr
-    - nlreturn
     - noctx
     - nolintlint
+    - nosprintfhostport
     - paralleltest
     - prealloc
     - predeclared
+    - reassign
+    - recvcheck
     - revive
     - rowserrcheck
+    - sloglint
+    - spancheck
     - sqlclosecheck
     - staticcheck
-    - structcheck
-    - stylecheck
+    - tagalign
+    - testableexamples
+    - testifylint
     - testpackage
     - thelper
     - tparallel
-    - typecheck
     - unconvert
     - unparam
     - unused
-    - varcheck
+    - usestdlibvars
+    - usetesting
     - wastedassign
     - whitespace
     - wrapcheck
-    - wsl
-
-linters-settings:
-  gci:
-    local-prefixes: github.com/MyChaOS87
-  lll:
-    line-length: 125
-
+    - wsl_v5
+  settings:
+    depguard:
+      rules:
+        pkg-dependencies:
+          list-mode: lax
+          files:
+            - "**/pkg/**"
+          deny:
+            - pkg: "github.com/MyChaOS87/automqttion/cmd"
+              desc: "pkg is forbidden to use /cmd packages"
+            - pkg: "github.com/MyChaOS87/automqttion/config"
+              desc: "pkg is forbidden to use /config packages"
+            - pkg: "github.com/MyChaOS87/automqttion/internal"
+              desc: "pkg is forbidden to use /internal packages"
+    goconst:
+      ignore-tests: true
+    gomodguard_v2:
+      blocked:
+        - module: github.com/pkg/errors
+          recommendations:
+            - errors
+          reason: "github.com/pkg/errors is forbidden use errors package from stdlib"
+        - module: github.com/google/uuid
+          recommendations:
+            - uuid
+          reason: "github.com/google/uuid is forbidden use stdlib uuid package in Go 1.27"
+    lll:
+      line-length: 125
+    mnd:
+      ignored-numbers:
+        - "2"
+        - "8"
+        - "0o600"
+    sloglint:
+      context: all
+      key-naming-case: snake
+      args-on-sep-lines: true
+    staticcheck:
+      checks:
+        - all
+    usetesting:
+      context-background: true
+      context-todo: true
+      os-chdir: true
+      os-mkdir-temp: true
+      os-setenv: true
+      os-create-temp: true
+      os-temp-dir: true
+  exclusions:
+    generated: lax
+    presets:
+      - comments
+      - common-false-positives
+      - legacy
+      - std-error-handling
+    rules:
+      - linters:
+          - dupl
+          - errcheck
+          - funlen
+          - gocyclo
+          - gosec
+          - wrapcheck
+        path: _test\.go
+    paths:
+      - third_party$
+      - builtin$
+      - examples$
+      - mocks/
+formatters:
+  enable:
+    - gci
+    - gofmt
+    - gofumpt
+    - goimports
+  settings:
+    gci:
+      sections:
+        - standard
+        - default
+        - prefix(github.com/MyChaOS87/automqttion)
+  exclusions:
+    generated: lax
+    paths:
+      - third_party$
+      - builtin$
+      - examples$
+      - mocks$

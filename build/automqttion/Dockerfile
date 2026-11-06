@@ -1,9 +1,9 @@
-FROM golang:alpine AS builder
+FROM golang:1.27-alpine AS builder
 
 RUN apk update && apk add --no-cache git ca-certificates tzdata musl-utils && update-ca-certificates
 WORKDIR /build
-COPY vendor ./vendor
 COPY go.mod go.sum ./
+RUN go mod download
 COPY pkg ./pkg
 COPY internal ./internal
 COPY config ./config

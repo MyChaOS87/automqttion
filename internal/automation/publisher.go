@@ -4,7 +4,7 @@ import (
 	"fmt"
 	"reflect"
 
-	"github.com/MyChaOS87/automqttion.git/pkg/broker"
+	"github.com/MyChaOS87/automqttion/pkg/broker"
 )
 
 type publisher interface {
@@ -28,6 +28,7 @@ var (
 
 type jsonPublisher struct {
 	commonPublisher
+
 	content any
 }
 
@@ -37,6 +38,7 @@ func (j jsonPublisher) Publish() {
 
 type plainPublisher struct {
 	commonPublisher
+
 	content any
 }
 
