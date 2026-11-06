@@ -86,7 +86,6 @@ A comprehensive codebase audit reveals significant coverage gaps and convention 
 
 | Package | Status | Finding & Compliance Gap |
 |---|---|---|
-| [`internal/automation/match_test.go`](file:///home/kasch/projects/go/automqttion/internal/automation/match_test.go) | Non-compliant | Uses `//nolint:testpackage` and white-box `package automation` instead of black-box `package automation_test`. Lacks export boundary testing. |
 | [`internal/automation/automation.go`](file:///home/kasch/projects/go/automqttion/internal/automation/automation.go) | 0% Coverage | Untested. [`NewAutomation`](file:///home/kasch/projects/go/automqttion/internal/automation/automation.go#L87), [`Start`](file:///home/kasch/projects/go/automqttion/internal/automation/automation.go#L29), [`replaceIfYamlMatcher`](file:///home/kasch/projects/go/automqttion/internal/automation/automation.go#L42), and [`dereference`](file:///home/kasch/projects/go/automqttion/internal/automation/automation.go#L78) have no automated tests. |
 | [`internal/automation/publisher.go`](file:///home/kasch/projects/go/automqttion/internal/automation/publisher.go) | 0% Coverage | Untested. [`newPublisher`](file:///home/kasch/projects/go/automqttion/internal/automation/publisher.go#L49), [`jsonPublisher`](file:///home/kasch/projects/go/automqttion/internal/automation/publisher.go#L29), and [`plainPublisher`](file:///home/kasch/projects/go/automqttion/internal/automation/publisher.go#L39) have no automated tests. |
 | [`config`](file:///home/kasch/projects/go/automqttion/config) | 0% Coverage | Untested. [`LoadConfig`](file:///home/kasch/projects/go/automqttion/config/config.go#L42), [`ParseConfig`](file:///home/kasch/projects/go/automqttion/config/config.go#L65), and environment variable overrides have no automated tests. |
@@ -100,14 +99,6 @@ A comprehensive codebase audit reveals significant coverage gaps and convention 
 ## Tracked Backlog Items
 
 The following testing alignment and architectural backlog items are tracked privately on GitHub Project #1 (`MyChaOS87/.projects`):
-
-### Issue #17: Migrate payload matcher test suite to black-box tabular format
-- **Location**: [`internal/automation/match_test.go`](file:///home/kasch/projects/go/automqttion/internal/automation/match_test.go)
-- **Scope**:
-  - Remove `//nolint:testpackage` and transition package to `package automation_test`.
-  - Export `Match` (or provide `export_test.go` bridging for `match`) to test public package contract.
-  - Expand test matrix with additional edge cases: boolean values, empty strings, slice matching, negative numbers, and `nil` target vs non-nil data.
-  - Enforce `t.Parallel()` and `assert.Equal(t, tt.expected, actual)`.
 
 ### Issue #18: Add tabular unit tests for YAML matcher expansion, publisher dispatch, and automation wiring
 - **Location**: [`internal/automation/automation.go`](file:///home/kasch/projects/go/automqttion/internal/automation/automation.go), [`internal/automation/publisher.go`](file:///home/kasch/projects/go/automqttion/internal/automation/publisher.go)
