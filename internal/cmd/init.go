@@ -7,8 +7,8 @@ import (
 	"os/signal"
 	"syscall"
 
-	"github.com/MyChaOS87/automqttion.git/config"
-	logger "github.com/MyChaOS87/automqttion.git/pkg/log"
+	"github.com/MyChaOS87/automqttion/config"
+	logger "github.com/MyChaOS87/automqttion/pkg/log"
 )
 
 const (

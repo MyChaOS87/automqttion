@@ -7,8 +7,8 @@ import (
 
 	mqtt "github.com/eclipse/paho.mqtt.golang"
 
-	"github.com/MyChaOS87/automqttion.git/pkg/broker"
-	"github.com/MyChaOS87/automqttion.git/pkg/log"
+	"github.com/MyChaOS87/automqttion/pkg/broker"
+	"github.com/MyChaOS87/automqttion/pkg/log"
 )
 
 var (
@@ -34,6 +34,7 @@ func (p *mqttBroker) Topic(topicName string) broker.Topic {
 
 func (p *mqttBroker) Run(ctx context.Context, cancel context.CancelFunc) {
 	token := p.client.Connect()
+
 	select {
 	case <-token.Done():
 		if err := token.Error(); err != nil {
@@ -49,6 +50,7 @@ func (p *mqttBroker) Run(ctx context.Context, cancel context.CancelFunc) {
 
 func (t *mqttTopic) publishInternal(data string) {
 	token := t.client.Publish(t.topic, 1, false, data)
+
 	go func() {
 		token.Wait()
 
@@ -76,7 +78,7 @@ func (t *mqttTopic) Publish(data any) {
 }
 
 func (t *mqttTopic) SubscribeRawJSON(callback broker.CallbackFunction) {
-	internalCallback := func(client mqtt.Client, message mqtt.Message) {
+	internalCallback := func(_ mqtt.Client, message mqtt.Message) {
 		var raw any
 
 		err := json.Unmarshal(message.Payload(), &raw)
@@ -94,7 +96,7 @@ func (t *mqttTopic) SubscribeRawJSON(callback broker.CallbackFunction) {
 }
 
 func (t *mqttTopic) Subscribe(hint any, callback broker.CallbackFunction) {
-	internalCallback := func(client mqtt.Client, message mqtt.Message) {
+	internalCallback := func(_ mqtt.Client, message mqtt.Message) {
 		log.Debugf("got MQTT message: %s", message.Payload())
 
 		payload := reflect.New(reflect.TypeOf(hint))
@@ -115,6 +117,7 @@ func (t *mqttTopic) Subscribe(hint any, callback broker.CallbackFunction) {
 
 func (t *mqttTopic) subscribeInternal(internalCallback func(client mqtt.Client, message mqtt.Message)) {
 	token := t.client.Subscribe(t.topic, 0, internalCallback)
+
 	go func() {
 		token.Wait()
 

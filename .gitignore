@@ -14,7 +14,10 @@
 
 # Golang
 cover
+coverage/
+coverage.out
 goReports
+reports/
 
 # direnv
 .envrc
@@ -30,6 +33,7 @@ packaged.yaml
 .vscode/
 
 # test.ci reports / coverage
+reports/
 .report.log
 .report.xml
 .integration-report.log

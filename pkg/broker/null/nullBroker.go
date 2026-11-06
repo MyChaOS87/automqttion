@@ -3,7 +3,7 @@ package null
 import (
 	"context"
 
-	"github.com/MyChaOS87/automqttion.git/pkg/broker"
+	"github.com/MyChaOS87/automqttion/pkg/broker"
 )
 
 type (
@@ -23,12 +23,12 @@ func (nullBroker) Topic(string) broker.Topic {
 	return &nullTopic{}
 }
 
-func (nullTopic) Publish(interface{}) {
+func (nullTopic) Publish(any) {
 }
 
-func (nullTopic) PublishString(_ string) {}
+func (nullTopic) PublishString(string) {}
 
-func (nullTopic) Subscribe(_ interface{}, _ broker.CallbackFunction) {
+func (nullTopic) Subscribe(_ any, _ broker.CallbackFunction) {
 }
 
 func (nullTopic) SubscribeRawJSON(_ broker.CallbackFunction) {

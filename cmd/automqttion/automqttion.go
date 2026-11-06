@@ -1,10 +1,10 @@
 package main
 
 import (
-	"github.com/MyChaOS87/automqttion.git/internal/automation"
-	"github.com/MyChaOS87/automqttion.git/internal/cmd"
-	"github.com/MyChaOS87/automqttion.git/pkg/broker/mqtt"
-	"github.com/MyChaOS87/automqttion.git/pkg/log"
+	"github.com/MyChaOS87/automqttion/internal/automation"
+	"github.com/MyChaOS87/automqttion/internal/cmd"
+	"github.com/MyChaOS87/automqttion/pkg/broker/mqtt"
+	"github.com/MyChaOS87/automqttion/pkg/log"
 )
 
 func main() {
