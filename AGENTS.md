@@ -31,11 +31,7 @@ Consult these dedicated documents for detailed technical specifications and patt
 
 ## Git & Solo Linear-`main` Workflow
 
-- **Repository Boundary**: Always run git commands targeted strictly to this project directory:
-  ```bash
-  git -C . <command>
-  ```
-- **Linear-`main` Development**: Solo maintainer mode is active. Work directly on `main` for cohesive changes, or create an isolated worktree under `./worktree/automqttion/<branch>`. Merge branches back to `main` using fast-forward only (`git merge --ff-only`).
+- **Linear-`main` Development**: Solo maintainer mode is active. Work directly on `main` for cohesive changes, or create an isolated feature branch / worktree and merge back to `main` using fast-forward only (`git merge --ff-only`).
 - **Remote Mutation Safeguard**: Never run `git push`, `git push --force`, or any command that mutates git remotes without explicit, affirmative user confirmation.
 
 ---
