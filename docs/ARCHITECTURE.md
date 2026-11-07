@@ -6,8 +6,8 @@ This document describes the architectural layout, package dependency graph, reac
 
 ## Package DAG & Boundary Decoupling
 
-The repository compiles a single binary from [`cmd/automqttion`](file:///home/kasch/projects/go/automqttion/cmd/automqttion/automqttion.go).
-The architecture strictly enforces package boundaries: generic utility packages located under [`pkg/`](file:///home/kasch/projects/go/automqttion/pkg) never import application packages under [`cmd/`](file:///home/kasch/projects/go/automqttion/cmd), [`config/`](file:///home/kasch/projects/go/automqttion/config), or [`internal/`](file:///home/kasch/projects/go/automqttion/internal). This rule is enforced at build and lint time via `.golangci.yml` `depguard` settings.
+The repository compiles a single binary from [`cmd/automqttion`](../cmd/automqttion/automqttion.go).
+The architecture strictly enforces package boundaries: generic utility packages located under [`pkg/`](../pkg) never import application packages under [`cmd/`](../cmd), [`config/`](../config), or [`internal/`](../internal). This rule is enforced at build and lint time via `.golangci.yml` `depguard` settings.
 
 ```mermaid
 flowchart TD
@@ -65,7 +65,7 @@ flowchart TD
 
 ## Reactive Message Processing Sequence
 
-[`cmd/automqttion`](file:///home/kasch/projects/go/automqttion/cmd/automqttion/automqttion.go) acts as an event-driven automation hub. When started, it registers an [`automation`](file:///home/kasch/projects/go/automqttion/internal/automation/automation.go#L23) instance for each topic defined in `cfg.Automate`.
+[`cmd/automqttion`](../cmd/automqttion/automqttion.go) acts as an event-driven automation hub. When started, it registers an [`automation`](../internal/automation/automation.go#L23) instance for each topic defined in `cfg.Automate`.
 
 The sequence below illustrates the end-to-end lifecycle when an MQTT message arrives on a monitored topic:
 
@@ -109,7 +109,7 @@ sequenceDiagram
 
 ## Declarative Pattern Matching Architecture
 
-Pattern matching in [`internal/automation/match.go`](file:///home/kasch/projects/go/automqttion/internal/automation/match.go) is designed for declarative JSON tree inspection:
+Pattern matching in [`internal/automation/match.go`](../internal/automation/match.go) is designed for declarative JSON tree inspection:
 
 ```
 Incoming JSON Data                Target Rule Pattern
@@ -122,23 +122,23 @@ Incoming JSON Data                Target Rule Pattern
 ```
 
 ### 1. Structural Subset Matching
-When the target pattern is a `map[string]any`, the matcher iterates across all keys present in the target. It requires each target key to exist in the data map and recursively evaluates [`match(v, dat[k])`](file:///home/kasch/projects/go/automqttion/internal/automation/match.go#L13). Additional fields in the incoming payload are ignored, allowing broad events to trigger targeted automations.
+When the target pattern is a `map[string]any`, the matcher iterates across all keys present in the target. It requires each target key to exist in the data map and recursively evaluates [`match(v, dat[k])`](../internal/automation/match.go#L13). Additional fields in the incoming payload are ignored, allowing broad events to trigger targeted automations.
 
 ### 2. Cross-Type Numeric Equality
 In IoT architectures, numbers often undergo type shifts between producers, brokers, and parsers (e.g., an integer `104` in YAML vs `float64(104)` parsed from JSON).
-The function [`numericEqual`](file:///home/kasch/projects/go/automqttion/internal/automation/match.go#L36) avoids false negatives by:
-- Verifying both values are numeric (`int`, `uint`, or `float` variants via [`isNumeric`](file:///home/kasch/projects/go/automqttion/internal/automation/match.go#L26)).
+The function [`numericEqual`](../internal/automation/match.go#L36) avoids false negatives by:
+- Verifying both values are numeric (`int`, `uint`, or `float` variants via [`isNumeric`](../internal/automation/match.go#L26)).
 - Converting operands bidirectionally via `reflect.Value.Convert`.
 - Asserting equality in both directions to prevent loss of precision during narrowing conversions.
 
 ### 3. YAML Pre-Compilation (`$yaml`)
-During automation initialization in [`NewAutomation`](file:///home/kasch/projects/go/automqttion/internal/automation/automation.go#L87), the helper [`replaceIfYamlMatcher`](file:///home/kasch/projects/go/automqttion/internal/automation/automation.go#L42) scans each rule's match field. If a map contains `$yaml`, the inline string block is unmarshaled into `map[string]any` upfront. Rule evaluation at runtime occurs purely between in-memory Go maps with zero string-parsing overhead.
+During automation initialization in [`NewAutomation`](../internal/automation/automation.go#L87), the helper [`replaceIfYamlMatcher`](../internal/automation/automation.go#L42) scans each rule's match field. If a map contains `$yaml`, the inline string block is unmarshaled into `map[string]any` upfront. Rule evaluation at runtime occurs purely between in-memory Go maps with zero string-parsing overhead.
 
 ---
 
 ## Action Publisher Polymorphism
 
-Publishers implement the [`publisher`](file:///home/kasch/projects/go/automqttion/internal/automation/publisher.go#L10) interface and dispatch commands to an assigned [`broker.Topic`](file:///home/kasch/projects/go/automqttion/pkg/broker/broker.go#L10):
+Publishers implement the [`publisher`](../internal/automation/publisher.go#L10) interface and dispatch commands to an assigned [`broker.Topic`](../pkg/broker/broker.go#L10):
 
 ```mermaid
 classDiagram
@@ -167,15 +167,15 @@ classDiagram
     commonPublisher <|-- plainPublisher
 ```
 
-- **[`plainPublisher`](file:///home/kasch/projects/go/automqttion/internal/automation/publisher.go#L39)**: Selected when configuration contains `$plain`. Formats content with `fmt.Sprintf("%v", content)` and emits an unencoded string (ideal for device commands like `on`, `off`, `toggle`).
-- **[`jsonPublisher`](file:///home/kasch/projects/go/automqttion/internal/automation/publisher.go#L29)**: Selected when configuration contains `$json` or as default fallback. Marshals the Go structure into JSON before sending.
+- **[`plainPublisher`](../internal/automation/publisher.go#L39)**: Selected when configuration contains `$plain`. Formats content with `fmt.Sprintf("%v", content)` and emits an unencoded string (ideal for device commands like `on`, `off`, `toggle`).
+- **[`jsonPublisher`](../internal/automation/publisher.go#L29)**: Selected when configuration contains `$json` or as default fallback. Marshals the Go structure into JSON before sending.
 
 ---
 
 ## Container Build & Kubernetes Deployment Strategy
 
 ### Multi-Stage `FROM scratch` Build
-The production container is defined in [`build/automqttion/Dockerfile`](file:///home/kasch/projects/go/automqttion/build/automqttion/Dockerfile):
+The production container is defined in [`build/automqttion/Dockerfile`](../build/automqttion/Dockerfile):
 
 1. **Build Stage (`golang:1.27-alpine`)**:
    - Downloads modules and copies source code.
@@ -189,9 +189,9 @@ The production container is defined in [`build/automqttion/Dockerfile`](file:///
    - Sets entrypoint to `["/automqttion"]`.
 
 ### Kubernetes Helm Chart
-The repository includes a production-ready Helm chart under [`helm/charts/automqttion`](file:///home/kasch/projects/go/automqttion/helm/charts/automqttion):
-- [`Chart.yaml`](file:///home/kasch/projects/go/automqttion/helm/charts/automqttion/Chart.yaml): Versioned application chart (`version: 0.0.2`, `appVersion: "main"`).
-- [`values.yaml`](file:///home/kasch/projects/go/automqttion/helm/charts/automqttion/values.yaml): Default values specifying image repository `ghcr.io/mychaos87/automqttion`, resource limits, pod security contexts, and replicas.
-- [`templates/deployment.yaml`](file:///home/kasch/projects/go/automqttion/helm/charts/automqttion/templates/deployment.yaml): Standard Kubernetes Deployment manifest with readiness and liveness lifecycle definitions.
-- [`templates/serviceaccount.yaml`](file:///home/kasch/projects/go/automqttion/helm/charts/automqttion/templates/serviceaccount.yaml): Dedicated ServiceAccount for RBAC isolation.
-- [`templates/hpa.yaml`](file:///home/kasch/projects/go/automqttion/helm/charts/automqttion/templates/hpa.yaml): Optional HorizontalPodAutoscaler for high-throughput MQTT workloads.
+The repository includes a production-ready Helm chart under [`helm/charts/automqttion`](../helm/charts/automqttion):
+- [`Chart.yaml`](../helm/charts/automqttion/Chart.yaml): Versioned application chart (`version: 0.0.2`, `appVersion: "main"`).
+- [`values.yaml`](../helm/charts/automqttion/values.yaml): Default values specifying image repository `ghcr.io/mychaos87/automqttion`, resource limits, pod security contexts, and replicas.
+- [`templates/deployment.yaml`](../helm/charts/automqttion/templates/deployment.yaml): Standard Kubernetes Deployment manifest with readiness and liveness lifecycle definitions.
+- [`templates/serviceaccount.yaml`](../helm/charts/automqttion/templates/serviceaccount.yaml): Dedicated ServiceAccount for RBAC isolation.
+- [`templates/hpa.yaml`](../helm/charts/automqttion/templates/hpa.yaml): Optional HorizontalPodAutoscaler for high-throughput MQTT workloads.

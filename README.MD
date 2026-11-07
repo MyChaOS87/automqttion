@@ -22,7 +22,7 @@ When smart home protocols (such as Local Control Network, Zigbee, or Matter) pub
 
 ## Configuration Example
 
-The daemon is configured via [`config/config.yml`](file:///home/kasch/projects/go/automqttion/config/config.yml). Below is an example translating LCN bus status telegrams into Shelly switch commands:
+The daemon is configured via [`config/config.yml`](./config/config.yml). Below is an example translating LCN bus status telegrams into Shelly switch commands:
 
 ```yaml
 ---
@@ -99,7 +99,7 @@ helm install automqttion ./helm/charts/automqttion \
 ---
 
 ## License
-Licensed under the **GNU General Public License v3.0 (GPL-3.0)**. See [`LICENSE.MD`](file:///home/kasch/projects/go/automqttion/LICENSE.MD) for full details.
+Licensed under the **GNU General Public License v3.0 (GPL-3.0)**. See [`LICENSE.MD`](./LICENSE.MD) for full details.
 
 ---
 
@@ -107,9 +107,9 @@ Licensed under the **GNU General Public License v3.0 (GPL-3.0)**. See [`LICENSE.
 
 For technical specifications, architecture diagrams, coding idioms, testing guidelines, and toolchain rules, refer to the project documentation:
 
-- [Agent Guide (`AGENTS.md`)](file:///home/kasch/projects/go/automqttion/AGENTS.md): Project overview, linear-main workflow, sandbox execution matrix, and agent hazards.
-- [Ubiquitous Language & Domain Glossary (`CONTEXT.md`)](file:///home/kasch/projects/go/automqttion/CONTEXT.md): Core domain concepts, subset matching, numeric equality, `$yaml` expander, publishers, and broker interfaces.
-- [System Architecture (`docs/ARCHITECTURE.md`)](file:///home/kasch/projects/go/automqttion/docs/ARCHITECTURE.md): Package DAG, Mermaid sequence diagrams, matching mechanics, publisher polymorphism, and container architecture.
-- [Coding Conventions (`docs/CONVENTIONS.md`)](file:///home/kasch/projects/go/automqttion/docs/CONVENTIONS.md): Go 1.27 idioms, declarative operators, reflection standards, sentinel errors, and functional options.
-- [Testing Standards (`docs/TESTING.md`)](file:///home/kasch/projects/go/automqttion/docs/TESTING.md): Output-oriented tabular tests, 3-tier testing model, testing compliance audit, and tracked backlog items (#17–#21).
-- [Developer Toolchain (`docs/TOOLCHAIN.md`)](file:///home/kasch/projects/go/automqttion/docs/TOOLCHAIN.md): Makefile targets, isolated tool modules, vulnerability scanning, and licensing compliance.
+- [Agent Guide (`AGENTS.md`)](./AGENTS.md): Project overview, linear-main workflow, sandbox execution matrix, and agent hazards.
+- [Ubiquitous Language & Domain Glossary (`CONTEXT.md`)](./CONTEXT.md): Core domain concepts, subset matching, numeric equality, `$yaml` expander, publishers, and broker interfaces.
+- [System Architecture (`docs/ARCHITECTURE.md`)](./docs/ARCHITECTURE.md): Package DAG, Mermaid sequence diagrams, matching mechanics, publisher polymorphism, and container architecture.
+- [Coding Conventions (`docs/CONVENTIONS.md`)](./docs/CONVENTIONS.md): Go 1.27 idioms, declarative operators, reflection standards, sentinel errors, and functional options.
+- [Testing Standards (`docs/TESTING.md`)](./docs/TESTING.md): Output-oriented tabular tests, 3-tier testing model, testing compliance audit, and tracked backlog items (#17–#21).
+- [Developer Toolchain (`docs/TOOLCHAIN.md`)](./docs/TOOLCHAIN.md): Makefile targets, isolated tool modules, vulnerability scanning, and licensing compliance.

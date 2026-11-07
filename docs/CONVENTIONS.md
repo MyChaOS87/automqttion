@@ -44,7 +44,7 @@ actions:
     content:
       $plain: on
 ```
-- **Convention**: Emits the value converted to string via `fmt.Sprintf("%v", content)` through [`topic.PublishString`](file:///home/kasch/projects/go/automqttion/pkg/broker/broker.go#L11).
+- **Convention**: Emits the value converted to string via `fmt.Sprintf("%v", content)` through [`topic.PublishString`](../pkg/broker/broker.go#L11).
 
 ### 3. `$json` Action Content Operator
 Used inside `content:` blocks to signal structured JSON marshaling:
@@ -56,14 +56,14 @@ actions:
         target_temperature: 21.5
         mode: auto
 ```
-- **Convention**: Dispatches the content structure through [`topic.Publish`](file:///home/kasch/projects/go/automqttion/pkg/broker/broker.go#L12) which serializes via `json.Marshal`.
+- **Convention**: Dispatches the content structure through [`topic.Publish`](../pkg/broker/broker.go#L12) which serializes via `json.Marshal`.
 - **Default Fallback**: If neither `$plain` nor `$json` is present in a map, the publisher defaults to JSON marshaling.
 
 ---
 
 ## Safe Reflection Standards
 
-Reflection is used in [`internal/automation`](file:///home/kasch/projects/go/automqttion/internal/automation) for dynamic message matching and pointer dereferencing:
+Reflection is used in [`internal/automation`](../internal/automation) for dynamic message matching and pointer dereferencing:
 
 1. **Kind Validation Before Conversion**: Always verify that `reflect.Value.CanConvert` returns `true` before calling `.Convert()`.
 2. **Bidirectional Numeric Checks**: When checking numeric equality between disparate types (e.g., `int` and `float64`), convert in both directions:
@@ -73,7 +73,7 @@ Reflection is used in [`internal/automation`](file:///home/kasch/projects/go/aut
    ```
    This prevents lossy truncation (such as `1.2` truncating to `1`) from falsely reporting a match.
 3. **Map Iteration**: Use `val.MapRange()` instead of allocating intermediate key slices via `.MapKeys()`.
-4. **Pointer Dereferencing**: Always use [`dereference`](file:///home/kasch/projects/go/automqttion/internal/automation/automation.go#L78) to unwrap pointers before inspecting interface values.
+4. **Pointer Dereferencing**: Always use [`dereference`](../internal/automation/automation.go#L78) to unwrap pointers before inspecting interface values.
 
 ---
 
@@ -93,8 +93,8 @@ return nil, fmt.Errorf("failed to read config: %w", err)
 **Rule**: Libraries and sub-packages must **never** call `log.Fatal`, `log.Fatalf`, or `os.Exit`. They must return typed `error` values up the call stack to the entrypoint in `main()`.
 
 - **Current Technical Debt (Issue #21)**:
-  - [`replaceIfYamlMatcher`](file:///home/kasch/projects/go/automqttion/internal/automation/automation.go#L63) calls `log.Fatalf` if `$yaml` is not a string or fails YAML parsing.
-  - [`cmd.Init`](file:///home/kasch/projects/go/automqttion/internal/cmd/init.go#L28) logs fatal warnings and cancels context instead of propagating initialization errors.
+  - [`replaceIfYamlMatcher`](../internal/automation/automation.go#L63) calls `log.Fatalf` if `$yaml` is not a string or fails YAML parsing.
+  - [`cmd.Init`](../internal/cmd/init.go#L28) logs fatal warnings and cancels context instead of propagating initialization errors.
 - **Target Standard**: Refactor constructors (`NewAutomation`, `Init`) to return `(..., error)` and let `main()` handle process termination cleanly.
 
 ---
@@ -136,7 +136,7 @@ func NewBroker(options ...Option) broker.Broker {
 
 ## Configuration & Viper Mapping
 
-Configuration is loaded using Viper in [`config/config.go`](file:///home/kasch/projects/go/automqttion/config/config.go):
+Configuration is loaded using Viper in [`config/config.go`](../config/config.go):
 - **Environment Prefix**: `AUTOMQTTION`
 - **Key Delimiter**: Standard dots (`.`) are mapped to underscores (`_`) using `strings.NewReplacer(".", "_")`.
 - **Precedence**: Environment variables override configuration file values automatically via `v.AutomaticEnv()`.

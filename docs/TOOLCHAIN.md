@@ -6,7 +6,7 @@ This document details the build targets, static analysis tools, vulnerability sc
 
 ## Makefile Target Reference
 
-All repository automation is driven by [`Makefile`](file:///home/kasch/projects/go/automqttion/Makefile).
+All repository automation is driven by [`Makefile`](../Makefile).
 The makefile sets `export GOWORK=off` at the top level to guarantee build repeatability independent of any ambient workspace `go.work` file.
 
 | Target | Description | Gate / Action |
@@ -37,7 +37,7 @@ The makefile sets `export GOWORK=off` at the top level to guarantee build repeat
 
 ## Tool Isolation Architecture (`tools/*/dummy.go`)
 
-To avoid polluting the root [`go.mod`](file:///home/kasch/projects/go/automqttion/go.mod) with heavy CLI tools, every external tool runs inside its own dedicated module under `tools/<tool>/go.mod`.
+To avoid polluting the root [`go.mod`](../go.mod) with heavy CLI tools, every external tool runs inside its own dedicated module under `tools/<tool>/go.mod`.
 
 ### Tools Inventory
 - `tools/golangci-lint`: Multi-linter framework for Go (`v2`).
@@ -93,7 +93,7 @@ The security workflow combines static analysis, SBOM generation, and vulnerabili
 ```
 
 ### `.grype.yaml` Policy
-Vulnerability suppressions in [`.grype.yaml`](file:///home/kasch/projects/go/automqttion/.grype.yaml) must follow strict standards:
+Vulnerability suppressions in [`.grype.yaml`](../.grype.yaml) must follow strict standards:
 - Every entry in `ignore:` must include an inline justification comment explaining why the vulnerability is not exploitable in `automqttion` (e.g., unreachable code path, CLI-only scope, or mitigated by runtime container boundaries).
 - Never add blanket or uncommented ignores.
 
@@ -111,10 +111,10 @@ When a vulnerability is detected in a transitive (indirect) dependency:
 ## Licensing & Compliance
 
 ### Project License
-`automqttion` is licensed under the **GNU General Public License v3.0 (GPL-3.0)** as defined in [`LICENSE.MD`](file:///home/kasch/projects/go/automqttion/LICENSE.MD).
+`automqttion` is licensed under the **GNU General Public License v3.0 (GPL-3.0)** as defined in [`LICENSE.MD`](../LICENSE.MD).
 
 ### Dependency Licensing
-Dependencies are audited against [`tools/go-licence-detector/rules.yaml`](file:///home/kasch/projects/go/automqttion/tools/go-licence-detector/rules.yaml):
+Dependencies are audited against [`tools/go-licence-detector/rules.yaml`](../tools/go-licence-detector/rules.yaml):
 - Approved licenses include: `Apache-2.0`, `MIT`, `BSD-3-Clause`, `BSD-2-Clause`, `ISC`, `MPL-2.0`, `0BSD`, and `EPL-2.0`.
 - The MQTT client dependency `github.com/eclipse/paho.mqtt.golang` is dual-licensed under **EPL-2.0 OR BSD-3-Clause**, both of which are approved.
 

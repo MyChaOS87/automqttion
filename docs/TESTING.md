@@ -38,13 +38,13 @@ Event-driven automation rules and payload matchers must be verified through **ou
 ```
 
 ### Tier 1: Pure Matcher, Expander, & Config Tabular Tests
-- **Scope**: Pattern matching ([`match`](file:///home/kasch/projects/go/automqttion/internal/automation/match.go#L5)), numeric coercion ([`numericEqual`](file:///home/kasch/projects/go/automqttion/internal/automation/match.go#L36)), YAML expander ([`replaceIfYamlMatcher`](file:///home/kasch/projects/go/automqttion/internal/automation/automation.go#L42)), publisher selection ([`newPublisher`](file:///home/kasch/projects/go/automqttion/internal/automation/publisher.go#L49)), and configuration parsing ([`config.ParseConfig`](file:///home/kasch/projects/go/automqttion/config/config.go#L65)).
+- **Scope**: Pattern matching ([`match`](../internal/automation/match.go#L5)), numeric coercion ([`numericEqual`](../internal/automation/match.go#L36)), YAML expander ([`replaceIfYamlMatcher`](../internal/automation/automation.go#L42)), publisher selection ([`newPublisher`](../internal/automation/publisher.go#L49)), and configuration parsing ([`config.ParseConfig`](../config/config.go#L65)).
 - **Characteristics**: 100% in-memory, deterministic, zero network or filesystem dependencies, executes in milliseconds.
-- **Target Packages**: [`internal/automation`](file:///home/kasch/projects/go/automqttion/internal/automation), [`config`](file:///home/kasch/projects/go/automqttion/config), [`pkg/log`](file:///home/kasch/projects/go/automqttion/pkg/log).
+- **Target Packages**: [`internal/automation`](../internal/automation), [`config`](../config), [`pkg/log`](../pkg/log).
 
 ### Tier 2: In-Memory Component Fakes
-- **Scope**: Verifying [`automation.Automation`](file:///home/kasch/projects/go/automqttion/internal/automation/automation.go#L14) event loops, topic dispatch, and context cancellation without real network sockets.
-- **Fixtures**: Use [`null.NewBroker()`](file:///home/kasch/projects/go/automqttion/pkg/broker/null/nullBroker.go#L37) or lightweight channel-based fakes implementing [`broker.Broker`](file:///home/kasch/projects/go/automqttion/pkg/broker/broker.go#L5) and [`broker.Topic`](file:///home/kasch/projects/go/automqttion/pkg/broker/broker.go#L10) to capture published messages.
+- **Scope**: Verifying [`automation.Automation`](../internal/automation/automation.go#L14) event loops, topic dispatch, and context cancellation without real network sockets.
+- **Fixtures**: Use [`null.NewBroker()`](../pkg/broker/null/nullBroker.go#L37) or lightweight channel-based fakes implementing [`broker.Broker`](../pkg/broker/broker.go#L5) and [`broker.Topic`](../pkg/broker/broker.go#L10) to capture published messages.
 
 ### Tier 3: Container Integration Tests
 - **Scope**: Live end-to-end MQTT connectivity using an external Mosquitto broker container.
@@ -86,11 +86,11 @@ A comprehensive codebase audit reveals significant coverage gaps and convention 
 
 | Package | Status | Finding & Compliance Gap |
 |---|---|---|
-| [`config`](file:///home/kasch/projects/go/automqttion/config) | 0% Coverage | Untested. [`LoadConfig`](file:///home/kasch/projects/go/automqttion/config/config.go#L42), [`ParseConfig`](file:///home/kasch/projects/go/automqttion/config/config.go#L65), and environment variable overrides have no automated tests. |
-| [`pkg/broker/mqtt`](file:///home/kasch/projects/go/automqttion/pkg/broker/mqtt) | 0% Coverage | Untested. Functional options ([`Broker`](file:///home/kasch/projects/go/automqttion/pkg/broker/mqtt/options.go#L16), [`TLS`](file:///home/kasch/projects/go/automqttion/pkg/broker/mqtt/options.go#L22)), client constructor, and message publishing have no tests. |
-| [`pkg/broker/null`](file:///home/kasch/projects/go/automqttion/pkg/broker/null) | 0% Coverage | Untested. No-op methods of [`nullBroker`](file:///home/kasch/projects/go/automqttion/pkg/broker/null/nullBroker.go#L10) and [`nullTopic`](file:///home/kasch/projects/go/automqttion/pkg/broker/null/nullBroker.go#L11) are not verified. |
-| [`pkg/log`](file:///home/kasch/projects/go/automqttion/pkg/log) & [`pkg/log/config`](file:///home/kasch/projects/go/automqttion/pkg/log/config) | 0% Coverage | Untested. Logger initialization ([`NewLogger`](file:///home/kasch/projects/go/automqttion/pkg/log/zap_logger.go#L37), [`InitLogger`](file:///home/kasch/projects/go/automqttion/pkg/log/zap_logger.go#L52)), level parsing, and console/JSON encoding toggles have no tests. |
-| [`internal/cmd`](file:///home/kasch/projects/go/automqttion/internal/cmd) | 0% Coverage | Untested. [`Init`](file:///home/kasch/projects/go/automqttion/internal/cmd/init.go#L18) signal handling and context cancellation have no tests. |
+| [`config`](../config) | 0% Coverage | Untested. [`LoadConfig`](../config/config.go#L42), [`ParseConfig`](../config/config.go#L65), and environment variable overrides have no automated tests. |
+| [`pkg/broker/mqtt`](../pkg/broker/mqtt) | 0% Coverage | Untested. Functional options ([`Broker`](../pkg/broker/mqtt/options.go#L16), [`TLS`](../pkg/broker/mqtt/options.go#L22)), client constructor, and message publishing have no tests. |
+| [`pkg/broker/null`](../pkg/broker/null) | 0% Coverage | Untested. No-op methods of [`nullBroker`](../pkg/broker/null/nullBroker.go#L10) and [`nullTopic`](../pkg/broker/null/nullBroker.go#L11) are not verified. |
+| [`pkg/log`](../pkg/log) & [`pkg/log/config`](../pkg/log/config) | 0% Coverage | Untested. Logger initialization ([`NewLogger`](../pkg/log/zap_logger.go#L37), [`InitLogger`](../pkg/log/zap_logger.go#L52)), level parsing, and console/JSON encoding toggles have no tests. |
+| [`internal/cmd`](../internal/cmd) | 0% Coverage | Untested. [`Init`](../internal/cmd/init.go#L18) signal handling and context cancellation have no tests. |
 
 ---
 
@@ -99,7 +99,7 @@ A comprehensive codebase audit reveals significant coverage gaps and convention 
 The following testing alignment and architectural backlog items are tracked privately on GitHub Project #1 (`MyChaOS87/.projects`):
 
 ### Issue #19: Add unit tests for config loader, logger factory, and MQTT options
-- **Location**: [`config/config.go`](file:///home/kasch/projects/go/automqttion/config/config.go), [`pkg/log/zap_logger.go`](file:///home/kasch/projects/go/automqttion/pkg/log/zap_logger.go), [`pkg/broker/mqtt/options.go`](file:///home/kasch/projects/go/automqttion/pkg/broker/mqtt/options.go)
+- **Location**: [`config/config.go`](../config/config.go), [`pkg/log/zap_logger.go`](../pkg/log/zap_logger.go), [`pkg/broker/mqtt/options.go`](../pkg/broker/mqtt/options.go)
 - **Scope**:
   - Tabular tests for `LoadConfig` with valid YAML file, non-existent file (`ErrConfigFileNotFound`), and invalid YAML syntax.
   - Test `AUTOMQTTION_*` environment variable overrides via Viper.
@@ -107,14 +107,14 @@ The following testing alignment and architectural backlog items are tracked priv
   - Test functional options `mqtt.Broker()` and `mqtt.TLS()` on `mqtt.Config`.
 
 ### Issue #20: Add unit and boundary tests for null and MQTT message brokers
-- **Location**: [`pkg/broker/null/nullBroker.go`](file:///home/kasch/projects/go/automqttion/pkg/broker/null/nullBroker.go), [`pkg/broker/mqtt/mqttBroker.go`](file:///home/kasch/projects/go/automqttion/pkg/broker/mqtt/mqttBroker.go)
+- **Location**: [`pkg/broker/null/nullBroker.go`](../pkg/broker/null/nullBroker.go), [`pkg/broker/mqtt/mqttBroker.go`](../pkg/broker/mqtt/mqttBroker.go)
 - **Scope**:
   - Add unit tests verifying `nullBroker` and `nullTopic` methods execute without panic.
   - Add unit tests for `mqttTopic.Publish` and `mqttTopic.PublishString` with disconnected client handling.
   - Verify context cancellation halts `mqttBroker.Run` cleanly.
 
 ### Issue #21: Refactor CLI init and YAML matcher parsing to return errors instead of calling log.Fatal
-- **Location**: [`internal/automation/automation.go`](file:///home/kasch/projects/go/automqttion/internal/automation/automation.go#L63), [`internal/cmd/init.go`](file:///home/kasch/projects/go/automqttion/internal/cmd/init.go#L28)
+- **Location**: [`internal/automation/automation.go`](../internal/automation/automation.go#L63), [`internal/cmd/init.go`](../internal/cmd/init.go#L28)
 - **Scope**:
   - Refactor `replaceIfYamlMatcher(m any) (any, error)` to return errors instead of calling `log.Fatalf`.
   - Refactor `NewAutomation(..., matchersConfig []config.MatchConfig) (Automation, error)` to propagate configuration errors.
