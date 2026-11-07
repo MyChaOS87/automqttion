@@ -189,7 +189,7 @@ The production container is defined in [`build/automqttion/Dockerfile`](../build
 
 ### Kubernetes Helm Chart
 The repository includes a production-ready Helm chart under [`helm/charts/automqttion`](../helm/charts/automqttion):
-- [`Chart.yaml`](../helm/charts/automqttion/Chart.yaml): Versioned application chart (`version: 0.0.4`, `appVersion: "0.0.4"`).
+- [`Chart.yaml`](../helm/charts/automqttion/Chart.yaml): Versioned application chart (`version: 0.0.5`, `appVersion: "0.0.5"`).
 - [`values.yaml`](../helm/charts/automqttion/values.yaml): Default values specifying image repository `ghcr.io/mychaos87/automqttion`, resource limits, pod security contexts, and replicas.
 - [`templates/deployment.yaml`](../helm/charts/automqttion/templates/deployment.yaml): Standard Kubernetes Deployment manifest with readiness and liveness lifecycle definitions.
 - [`templates/serviceaccount.yaml`](../helm/charts/automqttion/templates/serviceaccount.yaml): Dedicated ServiceAccount for RBAC isolation.
