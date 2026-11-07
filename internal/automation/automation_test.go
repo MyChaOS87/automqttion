@@ -40,9 +40,10 @@ func (rb *recordingBroker) Topic(name string) broker.Topic {
 }
 
 type replaceIfYamlMatcherTestCases []struct {
-	name     string
-	input    any
-	expected any
+	name        string
+	input       any
+	expected    any
+	expectedErr error
 }
 
 func TestReplaceIfYamlMatcher(t *testing.T) {
@@ -87,13 +88,31 @@ func TestReplaceIfYamlMatcher(t *testing.T) {
 				},
 			},
 		},
+		{
+			name:        "$yaml with non-string value returns ErrYamlMatcherNotString",
+			input:       map[string]any{"$yaml": 123},
+			expectedErr: automation.ErrYamlMatcherNotString,
+		},
+		{
+			name:        "$yaml with invalid YAML syntax returns ErrYamlMatcherParse",
+			input:       map[string]any{"$yaml": "invalid: [yaml"},
+			expectedErr: automation.ErrYamlMatcherParse,
+		},
 	}
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			t.Parallel()
 
-			actual := automation.ReplaceIfYamlMatcher(tt.input)
+			actual, err := automation.ReplaceIfYamlMatcher(tt.input)
+			if tt.expectedErr != nil {
+				require.ErrorIs(t, err, tt.expectedErr)
+				assert.Nil(t, actual)
+
+				return
+			}
+
+			require.NoError(t, err)
 			assert.Equal(t, tt.expected, actual)
 		})
 	}
@@ -298,7 +317,8 @@ func TestAutomationStart(t *testing.T) {
 			defer cancel()
 
 			brk := newRecordingBroker()
-			auto := automation.NewAutomation(brk, tt.sourceTopic, tt.matchConfigs)
+			auto, err := automation.NewAutomation(brk, tt.sourceTopic, tt.matchConfigs)
+			require.NoError(t, err)
 			require.NotNil(t, auto)
 
 			auto.Start(ctx, cancel)
@@ -314,4 +334,18 @@ func TestAutomationStart(t *testing.T) {
 			assert.Equal(t, tt.expectedPubs, brk.published)
 		})
 	}
+}
+
+func TestNewAutomationError(t *testing.T) {
+	t.Parallel()
+
+	brk := newRecordingBroker()
+	auto, err := automation.NewAutomation(brk, "zigbee2mqtt/switch", []config.MatchConfig{
+		{
+			Match: map[string]any{"$yaml": 42},
+		},
+	})
+
+	require.ErrorIs(t, err, automation.ErrYamlMatcherNotString)
+	assert.Nil(t, auto)
 }

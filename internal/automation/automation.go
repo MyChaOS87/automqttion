@@ -2,13 +2,19 @@ package automation
 
 import (
 	"context"
+	"errors"
+	"fmt"
 	"reflect"
 
 	"go.yaml.in/yaml/v3"
 
 	"github.com/MyChaOS87/automqttion/config"
 	"github.com/MyChaOS87/automqttion/pkg/broker"
-	"github.com/MyChaOS87/automqttion/pkg/log"
+)
+
+var (
+	ErrYamlMatcherNotString = errors.New("$yaml element can only hold a string")
+	ErrYamlMatcherParse     = errors.New("cannot parse configuration $yaml tag")
 )
 
 type Automation interface {
@@ -39,10 +45,10 @@ func (a *automation) Start(_ context.Context, _ context.CancelFunc) {
 		})
 }
 
-func replaceIfYamlMatcher(m any) any {
+func replaceIfYamlMatcher(m any) (any, error) {
 	val := reflect.ValueOf(m)
 	if val.Kind() != reflect.Map {
-		return m
+		return m, nil
 	}
 
 	iter := val.MapRange()
@@ -52,7 +58,7 @@ func replaceIfYamlMatcher(m any) any {
 		v := iter.Value()
 
 		if k.Kind() != reflect.String {
-			return m
+			return m, nil
 		}
 
 		if reflect.DeepEqual(k.Interface(), "$yaml") {
@@ -60,19 +66,19 @@ func replaceIfYamlMatcher(m any) any {
 
 			s, ok := v.Interface().(string)
 			if !ok {
-				log.Fatalf("$yaml element can only hold a string")
+				return nil, ErrYamlMatcherNotString
 			}
 
 			err := yaml.Unmarshal([]byte(s), &newVal)
 			if err != nil {
-				log.Fatalf("cannot parse configuration §yaml tag: %s", err)
+				return nil, fmt.Errorf("%w: %w", ErrYamlMatcherParse, err)
 			}
 
-			return newVal
+			return newVal, nil
 		}
 	}
 
-	return m
+	return m, nil
 }
 
 func dereference(a any) any {
@@ -84,17 +90,22 @@ func dereference(a any) any {
 	return a
 }
 
-func NewAutomation(broker broker.Broker, topic string, matchersConfig []config.MatchConfig) Automation {
+func NewAutomation(broker broker.Broker, topic string, matchersConfig []config.MatchConfig) (Automation, error) {
 	matchers := make([]matcher, 0, len(matchersConfig))
 
 	for _, cfg := range matchersConfig {
+		matched, err := replaceIfYamlMatcher(cfg.Match)
+		if err != nil {
+			return nil, err
+		}
+
 		publishers := make([]publisher, 0, len(cfg.Actions))
 		for _, action := range cfg.Actions {
 			publishers = append(publishers, newPublisher(broker.Topic(action.Topic), action.Content))
 		}
 
 		matchers = append(matchers, matcher{
-			match:      replaceIfYamlMatcher(cfg.Match),
+			match:      matched,
 			publishers: publishers,
 		})
 	}
@@ -103,5 +114,5 @@ func NewAutomation(broker broker.Broker, topic string, matchersConfig []config.M
 		topic:    topic,
 		matchers: matchers,
 		broker:   broker,
-	}
+	}, nil
 }

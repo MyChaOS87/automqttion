@@ -41,7 +41,6 @@ flowchart TD
 
     auto --> cfg
     auto --> brokerPkg
-    auto --> logPkg
 
     cfg --> logCfg
 
@@ -65,7 +64,7 @@ flowchart TD
 
 ## Reactive Message Processing Sequence
 
-[`cmd/automqttion`](../cmd/automqttion/automqttion.go) acts as an event-driven automation hub. When started, it registers an [`automation`](../internal/automation/automation.go#L23) instance for each topic defined in `cfg.Automate`.
+[`cmd/automqttion`](../cmd/automqttion/automqttion.go) acts as an event-driven automation hub. When started, it registers an [`automation`](../internal/automation/automation.go#L28) instance for each topic defined in `cfg.Automate`.
 
 The sequence below illustrates the end-to-end lifecycle when an MQTT message arrives on a monitored topic:
 
@@ -132,7 +131,7 @@ The function [`numericEqual`](../internal/automation/match.go#L36) avoids false 
 - Asserting equality in both directions to prevent loss of precision during narrowing conversions.
 
 ### 3. YAML Pre-Compilation (`$yaml`)
-During automation initialization in [`NewAutomation`](../internal/automation/automation.go#L87), the helper [`replaceIfYamlMatcher`](../internal/automation/automation.go#L42) scans each rule's match field. If a map contains `$yaml`, the inline string block is unmarshaled into `map[string]any` upfront. Rule evaluation at runtime occurs purely between in-memory Go maps with zero string-parsing overhead.
+During automation initialization in [`NewAutomation`](../internal/automation/automation.go#L92), the helper [`replaceIfYamlMatcher`](../internal/automation/automation.go#L47) scans each rule's match field. If a map contains `$yaml`, the inline string block is unmarshaled into `map[string]any` upfront. Rule evaluation at runtime occurs purely between in-memory Go maps with zero string-parsing overhead.
 
 ---
 
@@ -178,19 +177,19 @@ classDiagram
 The production container is defined in [`build/automqttion/Dockerfile`](../build/automqttion/Dockerfile):
 
 1. **Build Stage (`golang:1.27-alpine`)**:
+   - Creates an unprivileged `appuser` (`UID 10001`, `/sbin/nologin`).
    - Downloads modules and copies source code.
-   - Compiles a static Go binary using `-ldflags "-X main.Version=$APP_VERSION -extldflags '-static'"`.
+   - Compiles a stripped static Go binary using `-ldflags "-w -s -X main.Version=$APP_VERSION -extldflags '-static'"`.
    - Uses build cache mounts (`--mount=type=cache,target=/root/.cache/go-build`) for rapid compilation.
 2. **Runtime Stage (`FROM scratch`)**:
    - Zero OS bloat, minimal attack surface, zero shell binaries.
-   - Copies CA certificates from builder (`/etc/ssl/certs/ca-certificates.crt`) for secure TLS connections.
-   - Copies timezone database (`/usr/share/zoneinfo`) for timezone-aware operations.
+   - Copies CA certificates (`/etc/ssl/certs/ca-certificates.crt`), timezone database (`/usr/share/zoneinfo`), and `/etc/passwd` + `/etc/group` from builder.
    - Copies the statically compiled binary `/dist/automqttion` and default configuration `/config/config.yml`.
-   - Sets entrypoint to `["/automqttion"]`.
+   - Runs as unprivileged `USER appuser:appuser` with entrypoint `["/automqttion"]`.
 
 ### Kubernetes Helm Chart
 The repository includes a production-ready Helm chart under [`helm/charts/automqttion`](../helm/charts/automqttion):
-- [`Chart.yaml`](../helm/charts/automqttion/Chart.yaml): Versioned application chart (`version: 0.0.2`, `appVersion: "main"`).
+- [`Chart.yaml`](../helm/charts/automqttion/Chart.yaml): Versioned application chart (`version: 0.0.4`, `appVersion: "0.0.4"`).
 - [`values.yaml`](../helm/charts/automqttion/values.yaml): Default values specifying image repository `ghcr.io/mychaos87/automqttion`, resource limits, pod security contexts, and replicas.
 - [`templates/deployment.yaml`](../helm/charts/automqttion/templates/deployment.yaml): Standard Kubernetes Deployment manifest with readiness and liveness lifecycle definitions.
 - [`templates/serviceaccount.yaml`](../helm/charts/automqttion/templates/serviceaccount.yaml): Dedicated ServiceAccount for RBAC isolation.

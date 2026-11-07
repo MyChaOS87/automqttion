@@ -6,7 +6,7 @@ This document defines the ubiquitous language, architectural terminology, and co
 
 ## Automation & Reactive Rule Domain
 
-### [`Automation`](./internal/automation/automation.go#L14)
+### [`Automation`](./internal/automation/automation.go#L19)
 The top-level execution interface for a topic-bound automation rule set:
 ```go
 type Automation interface {
@@ -15,7 +15,7 @@ type Automation interface {
 ```
 An `automation` instance listens to a single MQTT inbound topic via `SubscribeRawJSON`. When a message arrives, it evaluates each registered `matcher` sequentially and triggers associated actions.
 
-### [`matcher`](./internal/automation/automation.go#L18)
+### [`matcher`](./internal/automation/automation.go#L23)
 An internal binding pairing a target pattern (`match any`) with an array of action dispatchers (`publishers []publisher`):
 ```go
 type matcher struct {
@@ -47,10 +47,10 @@ match:
     Cmd: 104
     Payload: "MAQ="
 ```
-During initialization, [`replaceIfYamlMatcher`](./internal/automation/automation.go#L42) detects the `$yaml` key, parses the multi-line string into a native `map[string]any` via `go.yaml.in/yaml/v3`, and replaces the pattern with the parsed map.
+During initialization, [`replaceIfYamlMatcher`](./internal/automation/automation.go#L47) detects the `$yaml` key, parses the multi-line string into a native `map[string]any` via `go.yaml.in/yaml/v3`, and replaces the pattern with the parsed map.
 
-### Pointer Dereferencing ([`dereference`](./internal/automation/automation.go#L78))
-Incoming payloads from subscriber callbacks may arrive as pointers or raw values. The [`dereference`](./internal/automation/automation.go#L78) helper unwraps `reflect.Pointer` instances into their underlying values before passing them to the matcher.
+### Pointer Dereferencing ([`dereference`](./internal/automation/automation.go#L83))
+Incoming payloads from subscriber callbacks may arrive as pointers or raw values. The [`dereference`](./internal/automation/automation.go#L83) helper unwraps `reflect.Pointer` instances into their underlying values before passing them to the matcher.
 
 ---
 

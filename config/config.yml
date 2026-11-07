@@ -1,6 +1,6 @@
 ---
 mqtt:
-  broker: tcp://mosquitto.internal.k8s.vogelherdweg.de:1883
+  broker: tcp://mosquitto.internal:1883
 
 automate:
   lcn/segment/0/target/4/:
