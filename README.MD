@@ -111,5 +111,5 @@ For technical specifications, architecture diagrams, coding idioms, testing guid
 - [Ubiquitous Language & Domain Glossary (`CONTEXT.md`)](./CONTEXT.md): Core domain concepts, subset matching, numeric equality, `$yaml` expander, publishers, and broker interfaces.
 - [System Architecture (`docs/ARCHITECTURE.md`)](./docs/ARCHITECTURE.md): Package DAG, Mermaid sequence diagrams, matching mechanics, publisher polymorphism, and container architecture.
 - [Coding Conventions (`docs/CONVENTIONS.md`)](./docs/CONVENTIONS.md): Go 1.27 idioms, declarative operators, reflection standards, sentinel errors, and functional options.
-- [Testing Standards (`docs/TESTING.md`)](./docs/TESTING.md): Output-oriented tabular tests, 3-tier testing model, testing compliance audit, and tracked backlog items (#17–#21).
+- [Testing Standards (`docs/TESTING.md`)](./docs/TESTING.md): Output-oriented tabular tests, 3-tier testing model, and mandatory test mechanics.
 - [Developer Toolchain (`docs/TOOLCHAIN.md`)](./docs/TOOLCHAIN.md): Makefile targets, isolated tool modules, vulnerability scanning, and licensing compliance.

@@ -73,7 +73,7 @@ Reflection is used in [`internal/automation`](../internal/automation) for dynami
    ```
    This prevents lossy truncation (such as `1.2` truncating to `1`) from falsely reporting a match.
 3. **Map Iteration**: Use `val.MapRange()` instead of allocating intermediate key slices via `.MapKeys()`.
-4. **Pointer Dereferencing**: Always use [`dereference`](../internal/automation/automation.go#L78) to unwrap pointers before inspecting interface values.
+4. **Pointer Dereferencing**: Always use [`dereference`](../internal/automation/automation.go#L83) to unwrap pointers before inspecting interface values.
 
 ---
 
@@ -89,13 +89,8 @@ When wrapping lower-level I/O or parser failures:
 return nil, fmt.Errorf("failed to read config: %w", err)
 ```
 
-### Eliminating `log.Fatal` in Library Code
-**Rule**: Libraries and sub-packages must **never** call `log.Fatal`, `log.Fatalf`, or `os.Exit`. They must return typed `error` values up the call stack to the entrypoint in `main()`.
-
-- **Current Technical Debt (Issue #21)**:
-  - [`replaceIfYamlMatcher`](../internal/automation/automation.go#L63) calls `log.Fatalf` if `$yaml` is not a string or fails YAML parsing.
-  - [`cmd.Init`](../internal/cmd/init.go#L28) logs fatal warnings and cancels context instead of propagating initialization errors.
-- **Target Standard**: Refactor constructors (`NewAutomation`, `Init`) to return `(..., error)` and let `main()` handle process termination cleanly.
+### No `log.Fatal` in Library Code
+**Rule**: Libraries and sub-packages must **never** call `log.Fatal`, `log.Fatalf`, or `os.Exit`. Constructors and parsers (such as [`NewAutomation`](../internal/automation/automation.go#L92), [`replaceIfYamlMatcher`](../internal/automation/automation.go#L47), and [`cmd.Init`](../internal/cmd/init.go#L19)) return typed `error` values up the call stack so the CLI entrypoint in `main()` handles process termination cleanly.
 
 ---
 

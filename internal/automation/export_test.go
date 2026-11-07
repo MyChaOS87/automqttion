@@ -26,7 +26,7 @@ func NewPublisher(topic broker.Topic, content any) ExportedPublisher {
 }
 
 // ReplaceIfYamlMatcher exposes replaceIfYamlMatcher for testing in package automation_test.
-func ReplaceIfYamlMatcher(m any) any {
+func ReplaceIfYamlMatcher(m any) (any, error) {
 	return replaceIfYamlMatcher(m)
 }
 

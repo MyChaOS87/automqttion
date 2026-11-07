@@ -1,6 +1,8 @@
 package main
 
 import (
+	stdlog "log"
+
 	"github.com/MyChaOS87/automqttion/internal/automation"
 	"github.com/MyChaOS87/automqttion/internal/cmd"
 	"github.com/MyChaOS87/automqttion/pkg/broker/mqtt"
@@ -8,7 +10,10 @@ import (
 )
 
 func main() {
-	ctx, cancel, cfg := cmd.Init()
+	ctx, cancel, cfg, err := cmd.Init()
+	if err != nil {
+		stdlog.Fatalf("initialization failed: %v", err)
+	}
 	defer cancel()
 
 	broker := mqtt.NewBroker(
@@ -17,7 +22,15 @@ func main() {
 	broker.Run(ctx, cancel)
 
 	for topic, matchers := range cfg.Automate {
-		automation.NewAutomation(broker, topic, matchers).Start(ctx, cancel)
+		auto, err := automation.NewAutomation(broker, topic, matchers)
+		if err != nil {
+			log.Errorf("cannot create automation for topic %s: %v", topic, err)
+			cancel()
+
+			break
+		}
+
+		auto.Start(ctx, cancel)
 	}
 
 	<-ctx.Done()
