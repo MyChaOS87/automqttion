@@ -56,7 +56,7 @@ func newPublisher(topic *mqtt.Topic, content any) publisher {
 	commonPublisher := newCommonPublisher(topic)
 
 	defaultPublisher := func() publisher {
-		return &jsonPublisher{
+		return jsonPublisher{
 			commonPublisher: commonPublisher,
 			content:         content,
 		}
@@ -76,12 +76,13 @@ func newPublisher(topic *mqtt.Topic, content any) publisher {
 			return defaultPublisher()
 		}
 
-		if reflect.DeepEqual(k.Interface(), "$json") {
+		switch k.String() {
+		case "$json":
 			return jsonPublisher{
 				commonPublisher: commonPublisher,
 				content:         v.Interface(),
 			}
-		} else if reflect.DeepEqual(k.Interface(), "$plain") {
+		case "$plain":
 			return plainPublisher{
 				commonPublisher: commonPublisher,
 				content:         v.Interface(),

@@ -3,7 +3,7 @@ package config
 import (
 	"errors"
 	"fmt"
-	"log"
+	"path/filepath"
 	"strings"
 
 	"github.com/spf13/viper"
@@ -42,10 +42,8 @@ type Config struct {
 func LoadConfig(filename string) (*viper.Viper, error) {
 	v := viper.New()
 
-	v.SetConfigName(filename)
-	v.AddConfigPath(".")
-	v.AddConfigPath("./")
-	v.AddConfigPath("")
+	v.SetConfigName(filepath.Base(filename))
+	v.AddConfigPath(filepath.Dir(filename))
 	v.SetEnvKeyReplacer(strings.NewReplacer(".", "_"))
 	v.SetEnvPrefix(envPrefix)
 	v.AutomaticEnv()
@@ -66,8 +64,6 @@ func ParseConfig(v *viper.Viper) (*Config, error) {
 	var c Config
 
 	if err := v.Unmarshal(&c); err != nil {
-		log.Printf("unable to decode into struct, %v", err)
-
 		return nil, fmt.Errorf("failed to parse config: %w", err)
 	}
 

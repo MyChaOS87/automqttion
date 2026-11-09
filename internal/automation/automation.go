@@ -63,7 +63,7 @@ func replaceIfYamlMatcher(m any) (any, error) {
 			return m, nil
 		}
 
-		if reflect.DeepEqual(k.Interface(), "$yaml") {
+		if k.String() == "$yaml" {
 			var newVal map[string]any
 
 			s, ok := v.Interface().(string)

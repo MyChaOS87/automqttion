@@ -2,6 +2,7 @@ package config_test
 
 import (
 	"os"
+	"path/filepath"
 	"testing"
 
 	"github.com/stretchr/testify/assert"
@@ -56,16 +57,14 @@ func TestLoadAndParseConfig(t *testing.T) {
 		t.Run(tt.name, func(t *testing.T) {
 			t.Parallel()
 
+			configName := tt.configName
 			if tt.yamlContent != "" {
-				filename := tt.configName + ".yml"
-				err := os.WriteFile(filename, []byte(tt.yamlContent), 0o600)
+				configName = filepath.Join(t.TempDir(), tt.configName)
+				err := os.WriteFile(configName+".yml", []byte(tt.yamlContent), 0o600)
 				require.NoError(t, err)
-				t.Cleanup(func() {
-					_ = os.Remove(filename)
-				})
 			}
 
-			v, err := config.LoadConfig(tt.configName)
+			v, err := config.LoadConfig(configName)
 			if tt.expectedErr != nil {
 				require.ErrorIs(t, err, tt.expectedErr)
 				assert.Nil(t, v)
