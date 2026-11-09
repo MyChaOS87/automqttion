@@ -3,41 +3,15 @@ package automation_test
 import (
 	"context"
 	"testing"
+	"testing/synctest"
 
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 
 	"github.com/MyChaOS87/automqttion/config"
 	"github.com/MyChaOS87/automqttion/internal/automation"
-	"github.com/MyChaOS87/automqttion/pkg/broker"
+	"github.com/MyChaOS87/automqttion/pkg/broker/mqtt/mqtttest"
 )
-
-type recordingBroker struct {
-	topics    map[string]*recordingTopic
-	published []recordedPublish
-}
-
-func newRecordingBroker() *recordingBroker {
-	return &recordingBroker{
-		topics: make(map[string]*recordingTopic),
-	}
-}
-
-func (rb *recordingBroker) Run(_ context.Context, _ context.CancelFunc) {}
-
-func (rb *recordingBroker) Topic(name string) broker.Topic {
-	if t, ok := rb.topics[name]; ok {
-		return t
-	}
-
-	t := &recordingTopic{
-		name:      name,
-		published: &rb.published,
-	}
-	rb.topics[name] = t
-
-	return t
-}
 
 type replaceIfYamlMatcherTestCases []struct {
 	name        string
@@ -173,21 +147,16 @@ type automationStartTestCases []struct {
 	name          string
 	sourceTopic   string
 	matchConfigs  []config.MatchConfig
-	inboundEvents []any
-	expectedPubs  []recordedPublish
+	inboundEvents []string
+	expectedPubs  []mqtttest.PublishedMessage
 }
 
 func TestAutomationStart(t *testing.T) {
 	t.Parallel()
 
-	ptrPayload := any(map[string]any{
-		"action":      "single",
-		"linkquality": float64(120),
-	})
-
 	tests := automationStartTestCases{
 		{
-			name:        "matching pointer payload dispatches $plain and $json actions",
+			name:        "matching payload dispatches $plain and $json actions",
 			sourceTopic: "zigbee2mqtt/switch_1",
 			matchConfigs: []config.MatchConfig{
 				{
@@ -198,23 +167,27 @@ func TestAutomationStart(t *testing.T) {
 							Content: map[string]any{"$plain": "TOGGLE"},
 						},
 						{
+							Topic:   "zigbee2mqtt/light_invalid/set",
+							Content: make(chan int),
+						},
+						{
 							Topic:   "zigbee2mqtt/light_2/set",
 							Content: map[string]any{"$json": map[string]any{"state": "ON"}},
 						},
 					},
 				},
 			},
-			inboundEvents: []any{&ptrPayload},
-			expectedPubs: []recordedPublish{
+			inboundEvents: []string{`{"action":"single","linkquality":120}`},
+			expectedPubs: []mqtttest.PublishedMessage{
 				{
-					topic:   "zigbee2mqtt/light_1/set",
-					isPlain: true,
-					plain:   "TOGGLE",
+					Topic:   "zigbee2mqtt/light_1/set",
+					QoS:     1,
+					Payload: "TOGGLE",
 				},
 				{
-					topic:   "zigbee2mqtt/light_2/set",
-					isPlain: false,
-					jsonVal: map[string]any{"state": "ON"},
+					Topic:   "zigbee2mqtt/light_2/set",
+					QoS:     1,
+					Payload: `{"state":"ON"}`,
 				},
 			},
 		},
@@ -232,18 +205,14 @@ func TestAutomationStart(t *testing.T) {
 					},
 				},
 			},
-			inboundEvents: []any{
-				map[string]any{
-					"occupancy":  true,
-					"iluminance": float64(10.0),
-					"battery":    95,
-				},
+			inboundEvents: []string{
+				`{"occupancy":true,"iluminance":10,"battery":95}`,
 			},
-			expectedPubs: []recordedPublish{
+			expectedPubs: []mqtttest.PublishedMessage{
 				{
-					topic:   "zigbee2mqtt/hallway/set",
-					isPlain: false,
-					jsonVal: map[string]any{"state": "ON"},
+					Topic:   "zigbee2mqtt/hallway/set",
+					QoS:     1,
+					Payload: `{"state":"ON"}`,
 				},
 			},
 		},
@@ -261,8 +230,8 @@ func TestAutomationStart(t *testing.T) {
 					},
 				},
 			},
-			inboundEvents: []any{
-				map[string]any{"action": "single"},
+			inboundEvents: []string{
+				`{"action":"single"}`,
 			},
 			expectedPubs: nil,
 		},
@@ -289,21 +258,21 @@ func TestAutomationStart(t *testing.T) {
 					},
 				},
 			},
-			inboundEvents: []any{
-				map[string]any{"action": "off"},
-				map[string]any{"action": "unknown"},
-				map[string]any{"action": "on"},
+			inboundEvents: []string{
+				`{"action":"off"}`,
+				`{"action":"unknown"}`,
+				`{"action":"on"}`,
 			},
-			expectedPubs: []recordedPublish{
+			expectedPubs: []mqtttest.PublishedMessage{
 				{
-					topic:   "zigbee2mqtt/lamp/set",
-					isPlain: true,
-					plain:   "OFF",
+					Topic:   "zigbee2mqtt/lamp/set",
+					QoS:     1,
+					Payload: "OFF",
 				},
 				{
-					topic:   "zigbee2mqtt/lamp/set",
-					isPlain: true,
-					plain:   "ON",
+					Topic:   "zigbee2mqtt/lamp/set",
+					QoS:     1,
+					Payload: "ON",
 				},
 			},
 		},
@@ -313,25 +282,37 @@ func TestAutomationStart(t *testing.T) {
 		t.Run(tt.name, func(t *testing.T) {
 			t.Parallel()
 
-			ctx, cancel := context.WithCancel(t.Context())
-			defer cancel()
+			synctest.Test(t, func(t *testing.T) {
+				ctx, cancel := context.WithCancel(t.Context())
+				defer cancel()
 
-			brk := newRecordingBroker()
-			auto, err := automation.NewAutomation(brk, tt.sourceTopic, tt.matchConfigs)
-			require.NoError(t, err)
-			require.NotNil(t, auto)
+				brk, client := mqtttest.NewBroker()
 
-			auto.Start(ctx, cancel)
+				auto, err := automation.NewAutomation(brk, tt.sourceTopic, tt.matchConfigs)
+				require.NoError(t, err)
+				require.NotNil(t, auto)
 
-			srcTopic, exists := brk.topics[tt.sourceTopic]
-			require.True(t, exists)
-			require.NotNil(t, srcTopic.rawJSONSub)
+				auto.Start()
 
-			for _, ev := range tt.inboundEvents {
-				srcTopic.rawJSONSub(tt.sourceTopic, ev)
-			}
+				runErrCh := make(chan error, 1)
 
-			assert.Equal(t, tt.expectedPubs, brk.published)
+				go func() {
+					runErrCh <- brk.Run(ctx)
+				}()
+
+				synctest.Wait()
+
+				for _, ev := range tt.inboundEvents {
+					require.True(t, client.Deliver(tt.sourceTopic, ev))
+				}
+
+				synctest.Wait()
+
+				assert.Equal(t, tt.expectedPubs, client.PublishedMessages())
+
+				cancel()
+				require.NoError(t, <-runErrCh)
+			})
 		})
 	}
 }
@@ -339,7 +320,7 @@ func TestAutomationStart(t *testing.T) {
 func TestNewAutomationError(t *testing.T) {
 	t.Parallel()
 
-	brk := newRecordingBroker()
+	brk, _ := mqtttest.NewBroker()
 	auto, err := automation.NewAutomation(brk, "zigbee2mqtt/switch", []config.MatchConfig{
 		{
 			Match: map[string]any{"$yaml": 42},

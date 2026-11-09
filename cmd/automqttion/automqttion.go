@@ -17,23 +17,20 @@ func main() {
 	defer cancel()
 
 	broker := mqtt.NewBroker(
-		mqtt.Broker(cfg.Mqtt.Broker))
-
-	broker.Run(ctx, cancel)
+		mqtt.BrokerURL(cfg.Mqtt.Broker))
 
 	for topic, matchers := range cfg.Automate {
 		auto, err := automation.NewAutomation(broker, topic, matchers)
 		if err != nil {
 			log.Errorf("cannot create automation for topic %s: %v", topic, err)
-			cancel()
 
-			break
+			return
 		}
 
-		auto.Start(ctx, cancel)
+		auto.Start()
 	}
 
-	<-ctx.Done()
-
-	log.Errorf("context done: %s", ctx.Err().Error())
+	if err := broker.Run(ctx); err != nil {
+		log.Errorf("mqtt broker stopped with error: %v", err)
+	}
 }

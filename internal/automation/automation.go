@@ -1,7 +1,6 @@
 package automation
 
 import (
-	"context"
 	"errors"
 	"fmt"
 	"reflect"
@@ -9,7 +8,8 @@ import (
 	"go.yaml.in/yaml/v3"
 
 	"github.com/MyChaOS87/automqttion/config"
-	"github.com/MyChaOS87/automqttion/pkg/broker"
+	"github.com/MyChaOS87/automqttion/pkg/broker/mqtt"
+	"github.com/MyChaOS87/automqttion/pkg/log"
 )
 
 var (
@@ -18,7 +18,7 @@ var (
 )
 
 type Automation interface {
-	Start(ctx context.Context, cancel context.CancelFunc)
+	Start()
 }
 
 type matcher struct {
@@ -29,16 +29,18 @@ type matcher struct {
 type automation struct {
 	topic    string
 	matchers []matcher
-	broker   broker.Broker
+	broker   *mqtt.Broker
 }
 
-func (a *automation) Start(_ context.Context, _ context.CancelFunc) {
+func (a *automation) Start() {
 	a.broker.Topic(a.topic).
-		SubscribeRawJSON(func(_ string, data any) {
+		Subscribe(func(_ string, data any) {
 			for _, matcher := range a.matchers {
 				if match(matcher.match, dereference(data)) {
 					for _, publisher := range matcher.publishers {
-						publisher.Publish()
+						if err := publisher.Publish(); err != nil {
+							log.Errorf("cannot publish action: %s", err)
+						}
 					}
 				}
 			}
@@ -90,7 +92,7 @@ func dereference(a any) any {
 	return a
 }
 
-func NewAutomation(broker broker.Broker, topic string, matchersConfig []config.MatchConfig) (Automation, error) {
+func NewAutomation(broker *mqtt.Broker, topic string, matchersConfig []config.MatchConfig) (Automation, error) {
 	matchers := make([]matcher, 0, len(matchersConfig))
 
 	for _, cfg := range matchersConfig {

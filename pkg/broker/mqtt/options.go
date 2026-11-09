@@ -10,10 +10,12 @@ type (
 	Option func(*Config)
 	Config struct {
 		clientOptions *mqtt.ClientOptions
+		clientFactory func(*mqtt.ClientOptions) mqtt.Client
+		errorHandler  ErrorHandler
 	}
 )
 
-func Broker(broker string) Option {
+func BrokerURL(broker string) Option {
 	return func(c *Config) {
 		c.clientOptions.AddBroker(broker)
 	}
@@ -25,8 +27,26 @@ func TLS(tls *tls.Config) Option {
 	}
 }
 
+func ClientFactory(factory func(*mqtt.ClientOptions) mqtt.Client) Option {
+	return func(c *Config) {
+		if factory != nil {
+			c.clientFactory = factory
+		}
+	}
+}
+
+func OnError(handler ErrorHandler) Option {
+	return func(c *Config) {
+		if handler != nil {
+			c.errorHandler = handler
+		}
+	}
+}
+
 func newDefaultConfig() *Config {
 	return &Config{
 		clientOptions: mqtt.NewClientOptions(),
+		clientFactory: mqtt.NewClient,
+		errorHandler:  defaultErrorHandler,
 	}
 }

@@ -44,7 +44,7 @@ actions:
     content:
       $plain: on
 ```
-- **Convention**: Emits the value converted to string via `fmt.Sprintf("%v", content)` through [`topic.PublishString`](../pkg/broker/broker.go#L11).
+- **Convention**: Emits the value converted to string via `fmt.Sprintf("%v", content)` through [`topic.PublishString`](../pkg/broker/mqtt/mqttBroker.go).
 
 ### 3. `$json` Action Content Operator
 Used inside `content:` blocks to signal structured JSON marshaling:
@@ -56,7 +56,7 @@ actions:
         target_temperature: 21.5
         mode: auto
 ```
-- **Convention**: Dispatches the content structure through [`topic.Publish`](../pkg/broker/broker.go#L12) which serializes via `json.Marshal`.
+- **Convention**: Dispatches the content structure through [`topic.Publish`](../pkg/broker/mqtt/mqttBroker.go) which serializes via `json.Marshal`.
 - **Default Fallback**: If neither `$plain` nor `$json` is present in a map, the publisher defaults to JSON marshaling.
 
 ---
@@ -73,7 +73,7 @@ Reflection is used in [`internal/automation`](../internal/automation) for dynami
    ```
    This prevents lossy truncation (such as `1.2` truncating to `1`) from falsely reporting a match.
 3. **Map Iteration**: Use `val.MapRange()` instead of allocating intermediate key slices via `.MapKeys()`.
-4. **Pointer Dereferencing**: Always use [`dereference`](../internal/automation/automation.go#L83) to unwrap pointers before inspecting interface values.
+4. **Pointer Dereferencing**: Always use [`dereference`](../internal/automation/automation.go) to unwrap pointers before inspecting interface values.
 
 ---
 
@@ -90,7 +90,7 @@ return nil, fmt.Errorf("failed to read config: %w", err)
 ```
 
 ### No `log.Fatal` in Library Code
-**Rule**: Libraries and sub-packages must **never** call `log.Fatal`, `log.Fatalf`, or `os.Exit`. Constructors and parsers (such as [`NewAutomation`](../internal/automation/automation.go#L92), [`replaceIfYamlMatcher`](../internal/automation/automation.go#L47), and [`cmd.Init`](../internal/cmd/init.go#L19)) return typed `error` values up the call stack so the CLI entrypoint in `main()` handles process termination cleanly.
+**Rule**: Libraries and sub-packages must **never** call `log.Fatal`, `log.Fatalf`, or `os.Exit`. Constructors and parsers (such as [`NewAutomation`](../internal/automation/automation.go), [`replaceIfYamlMatcher`](../internal/automation/automation.go), and [`cmd.Init`](../internal/cmd/init.go)) return typed `error` values up the call stack so the CLI entrypoint in `main()` handles process termination cleanly.
 
 ---
 
@@ -103,10 +103,12 @@ type (
     Option func(*Config)
     Config struct {
         clientOptions *mqtt.ClientOptions
+        clientFactory func(*mqtt.ClientOptions) mqtt.Client
+        errorHandler  ErrorHandler
     }
 )
 
-func Broker(broker string) Option {
+func BrokerURL(broker string) Option {
     return func(c *Config) {
         c.clientOptions.AddBroker(broker)
     }
@@ -118,12 +120,18 @@ func TLS(tls *tls.Config) Option {
     }
 }
 
-func NewBroker(options ...Option) broker.Broker {
+func NewBroker(options ...Option) *Broker {
     config := newDefaultConfig()
     for _, opt := range options {
         opt(config)
     }
-    return &mqttBroker{client: mqtt.NewClient(config.clientOptions)}
+    b := &Broker{
+        errorHandler: config.errorHandler,
+    }
+    config.clientOptions.SetOnConnectHandler(b.onConnect)
+    config.clientOptions.SetConnectionLostHandler(b.onConnectionLost)
+    b.client = config.clientFactory(config.clientOptions)
+    return b
 }
 ```
 
