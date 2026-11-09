@@ -4,18 +4,18 @@ import (
 	"fmt"
 	"reflect"
 
-	"github.com/MyChaOS87/automqttion/pkg/broker"
+	"github.com/MyChaOS87/automqttion/pkg/broker/mqtt"
 )
 
 type publisher interface {
-	Publish()
+	Publish() error
 }
 
 type commonPublisher struct {
-	topic broker.Topic
+	topic *mqtt.Topic
 }
 
-func newCommonPublisher(topic broker.Topic) commonPublisher {
+func newCommonPublisher(topic *mqtt.Topic) commonPublisher {
 	return commonPublisher{
 		topic: topic,
 	}
@@ -32,8 +32,12 @@ type jsonPublisher struct {
 	content any
 }
 
-func (j jsonPublisher) Publish() {
-	j.topic.Publish(j.content)
+func (j jsonPublisher) Publish() error {
+	if err := j.topic.Publish(j.content); err != nil {
+		return fmt.Errorf("publish json content: %w", err)
+	}
+
+	return nil
 }
 
 type plainPublisher struct {
@@ -42,11 +46,13 @@ type plainPublisher struct {
 	content any
 }
 
-func (p plainPublisher) Publish() {
+func (p plainPublisher) Publish() error {
 	p.topic.PublishString(fmt.Sprintf("%v", p.content))
+
+	return nil
 }
 
-func newPublisher(topic broker.Topic, content any) publisher {
+func newPublisher(topic *mqtt.Topic, content any) publisher {
 	commonPublisher := newCommonPublisher(topic)
 
 	defaultPublisher := func() publisher {

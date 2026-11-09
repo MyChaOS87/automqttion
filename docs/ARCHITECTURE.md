@@ -22,9 +22,7 @@ flowchart TD
     end
 
     subgraph Pkg["Reusable Platform Libraries (pkg/)"]
-        brokerPkg["pkg/broker (Broker & Topic interfaces)"]
-        mqttPkg["pkg/broker/mqtt (Paho MQTT Client & Options)"]
-        nullPkg["pkg/broker/null (No-op NullBroker)"]
+        mqttPkg["pkg/broker/mqtt (Paho MQTT Broker, Topic & Options)"]
         logPkg["pkg/log (Zap Logger wrapper)"]
         logCfg["pkg/log/config (Logger config struct)"]
     end
@@ -32,7 +30,6 @@ flowchart TD
     cmdEntry --> cmdInit
     cmdEntry --> cfg
     cmdEntry --> auto
-    cmdEntry --> brokerPkg
     cmdEntry --> mqttPkg
     cmdEntry --> logPkg
 
@@ -40,14 +37,11 @@ flowchart TD
     cmdInit --> logPkg
 
     auto --> cfg
-    auto --> brokerPkg
+    auto --> mqttPkg
 
     cfg --> logCfg
 
-    mqttPkg --> brokerPkg
     mqttPkg --> logPkg
-
-    nullPkg --> brokerPkg
 
     logPkg --> logCfg
 
@@ -57,14 +51,14 @@ flowchart TD
 
     class cmdEntry cliClass;
     class cfg,cmdInit,auto internalClass;
-    class brokerPkg,mqttPkg,nullPkg,logPkg,logCfg pkgClass;
+    class mqttPkg,logPkg,logCfg pkgClass;
 ```
 
 ---
 
 ## Reactive Message Processing Sequence
 
-[`cmd/automqttion`](../cmd/automqttion/automqttion.go) acts as an event-driven automation hub. When started, it registers an [`automation`](../internal/automation/automation.go#L28) instance for each topic defined in `cfg.Automate`.
+[`cmd/automqttion`](../cmd/automqttion/automqttion.go) acts as an event-driven automation hub. When started, it registers an [`automation`](../internal/automation/automation.go) instance for each topic defined in `cfg.Automate`.
 
 The sequence below illustrates the end-to-end lifecycle when an MQTT message arrives on a monitored topic:
 
@@ -73,15 +67,15 @@ sequenceDiagram
     autonumber
     participant External as External MQTT Publisher
     participant Broker as MQTT Broker (Mosquitto)
-    participant MQTTTopic as mqttTopic (pkg/broker/mqtt)
+    participant MQTTTopic as Topic (pkg/broker/mqtt)
     participant Auto as automation (internal/automation)
     participant Matcher as match() (internal/automation)
     participant Pub as publisher (internal/automation)
-    participant TargetTopic as Target mqttTopic (pkg/broker/mqtt)
+    participant TargetTopic as Target Topic (pkg/broker/mqtt)
 
     External->>Broker: Publish message to topic (e.g. lcn/segment/0/target/4/)
     Broker->>MQTTTopic: Inbound MQTT packet
-    MQTTTopic->>MQTTTopic: SubscribeRawJSON callback (unmarshal JSON payload)
+    MQTTTopic->>MQTTTopic: Subscribe[any] callback (unmarshal JSON payload)
     MQTTTopic->>Auto: callback(topic, rawPayload)
     Auto->>Auto: dereference(rawPayload)
     loop For each configured matcher
@@ -121,43 +115,43 @@ Incoming JSON Data                Target Rule Pattern
 ```
 
 ### 1. Structural Subset Matching
-When the target pattern is a `map[string]any`, the matcher iterates across all keys present in the target. It requires each target key to exist in the data map and recursively evaluates [`match(v, dat[k])`](../internal/automation/match.go#L13). Additional fields in the incoming payload are ignored, allowing broad events to trigger targeted automations.
+When the target pattern is a `map[string]any`, the matcher iterates across all keys present in the target. It requires each target key to exist in the data map and recursively evaluates [`match(v, dat[k])`](../internal/automation/match.go). Additional fields in the incoming payload are ignored, allowing broad events to trigger targeted automations.
 
 ### 2. Cross-Type Numeric Equality
 In IoT architectures, numbers often undergo type shifts between producers, brokers, and parsers (e.g., an integer `104` in YAML vs `float64(104)` parsed from JSON).
-The function [`numericEqual`](../internal/automation/match.go#L36) avoids false negatives by:
-- Verifying both values are numeric (`int`, `uint`, or `float` variants via [`isNumeric`](../internal/automation/match.go#L26)).
+The function [`numericEqual`](../internal/automation/match.go) avoids false negatives by:
+- Verifying both values are numeric (`int`, `uint`, or `float` variants via [`isNumeric`](../internal/automation/match.go)).
 - Converting operands bidirectionally via `reflect.Value.Convert`.
 - Asserting equality in both directions to prevent loss of precision during narrowing conversions.
 
 ### 3. YAML Pre-Compilation (`$yaml`)
-During automation initialization in [`NewAutomation`](../internal/automation/automation.go#L92), the helper [`replaceIfYamlMatcher`](../internal/automation/automation.go#L47) scans each rule's match field. If a map contains `$yaml`, the inline string block is unmarshaled into `map[string]any` upfront. Rule evaluation at runtime occurs purely between in-memory Go maps with zero string-parsing overhead.
+During automation initialization in [`NewAutomation`](../internal/automation/automation.go), the helper [`replaceIfYamlMatcher`](../internal/automation/automation.go) scans each rule's match field. If a map contains `$yaml`, the inline string block is unmarshaled into `map[string]any` upfront. Rule evaluation at runtime occurs purely between in-memory Go maps with zero string-parsing overhead.
 
 ---
 
 ## Action Publisher Polymorphism
 
-Publishers implement the [`publisher`](../internal/automation/publisher.go#L10) interface and dispatch commands to an assigned [`broker.Topic`](../pkg/broker/broker.go#L10):
+Publishers implement the [`publisher`](../internal/automation/publisher.go) interface and dispatch commands to an assigned [`*mqtt.Topic`](../pkg/broker/mqtt/mqttBroker.go):
 
 ```mermaid
 classDiagram
     class publisher {
         <<interface>>
-        +Publish()
+        +Publish() error
     }
 
     class commonPublisher {
-        #topic broker.Topic
+        #topic *mqtt.Topic
     }
 
     class jsonPublisher {
         -content any
-        +Publish()
+        +Publish() error
     }
 
     class plainPublisher {
         -content any
-        +Publish()
+        +Publish() error
     }
 
     publisher <|.. jsonPublisher
@@ -166,8 +160,8 @@ classDiagram
     commonPublisher <|-- plainPublisher
 ```
 
-- **[`plainPublisher`](../internal/automation/publisher.go#L39)**: Selected when configuration contains `$plain`. Formats content with `fmt.Sprintf("%v", content)` and emits an unencoded string (ideal for device commands like `on`, `off`, `toggle`).
-- **[`jsonPublisher`](../internal/automation/publisher.go#L29)**: Selected when configuration contains `$json` or as default fallback. Marshals the Go structure into JSON before sending.
+- **[`plainPublisher`](../internal/automation/publisher.go)**: Selected when configuration contains `$plain`. Formats content with `fmt.Sprintf("%v", content)` and emits an unencoded string (ideal for device commands like `on`, `off`, `toggle`).
+- **[`jsonPublisher`](../internal/automation/publisher.go)**: Selected when configuration contains `$json` or as default fallback. Marshals the Go structure into JSON before sending.
 
 ---
 
@@ -189,7 +183,7 @@ The production container is defined in [`build/automqttion/Dockerfile`](../build
 
 ### Kubernetes Helm Chart
 The repository includes a production-ready Helm chart under [`helm/charts/automqttion`](../helm/charts/automqttion):
-- [`Chart.yaml`](../helm/charts/automqttion/Chart.yaml): Versioned application chart (`version: 0.0.5`, `appVersion: "0.0.5"`).
+- [`Chart.yaml`](../helm/charts/automqttion/Chart.yaml): Versioned application chart (`version: 0.0.6`, `appVersion: "0.0.6"`).
 - [`values.yaml`](../helm/charts/automqttion/values.yaml): Default values specifying image repository `ghcr.io/mychaos87/automqttion`, resource limits, pod security contexts, and replicas.
 - [`templates/deployment.yaml`](../helm/charts/automqttion/templates/deployment.yaml): Standard Kubernetes Deployment manifest with readiness and liveness lifecycle definitions.
 - [`templates/serviceaccount.yaml`](../helm/charts/automqttion/templates/serviceaccount.yaml): Dedicated ServiceAccount for RBAC isolation.

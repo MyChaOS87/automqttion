@@ -3,142 +3,187 @@ package mqtt
 import (
 	"context"
 	"encoding/json"
-	"reflect"
+	"fmt"
+	"sync"
 
 	mqtt "github.com/eclipse/paho.mqtt.golang"
 
-	"github.com/MyChaOS87/automqttion/pkg/broker"
 	"github.com/MyChaOS87/automqttion/pkg/log"
 )
 
-var (
-	_ broker.Broker = &mqttBroker{}
-	_ broker.Topic  = &mqttTopic{}
-)
+type CallbackFunction[T any] func(topic string, data T)
 
-type mqttTopic struct {
+type Topic struct {
 	topic  string
-	client mqtt.Client
+	broker *Broker
 }
 
-type mqttBroker struct {
-	client mqtt.Client
+type Broker struct {
+	mu            sync.Mutex
+	client        mqtt.Client
+	connected     bool
+	errorHandler  ErrorHandler
+	subscriptions []func()
 }
 
-func (p *mqttBroker) Topic(topicName string) broker.Topic {
-	return &mqttTopic{
+func (b *Broker) Topic(topicName string) *Topic {
+	return &Topic{
 		topic:  topicName,
-		client: p.client,
+		broker: b,
 	}
 }
 
-func (p *mqttBroker) Run(ctx context.Context, cancel context.CancelFunc) {
-	token := p.client.Connect()
+func (b *Broker) Run(ctx context.Context) error {
+	token := b.client.Connect()
 
 	select {
 	case <-token.Done():
 		if err := token.Error(); err != nil {
-			log.Errorf("Error Connecting to MQTT Broker: %s", err.Error())
-			cancel()
-		} else {
-			log.Infof("Connection to MQTT Broker established")
+			return fmt.Errorf("connect to mqtt broker: %w", err)
 		}
+
+		log.Infof("Connection to MQTT Broker established")
 	case <-ctx.Done():
-		p.client.Disconnect(0)
+		b.disconnect()
+
+		return fmt.Errorf("mqtt broker context cancelled during connect: %w", ctx.Err())
+	}
+
+	<-ctx.Done()
+	b.disconnect()
+
+	return nil
+}
+
+func (b *Broker) disconnect() {
+	b.mu.Lock()
+	defer b.mu.Unlock()
+
+	b.connected = false
+	b.client.Disconnect(0)
+}
+
+func (b *Broker) onConnect(_ mqtt.Client) {
+	b.mu.Lock()
+	defer b.mu.Unlock()
+
+	b.connected = true
+
+	log.Infof("MQTT client connected; active subscriptions: %d", len(b.subscriptions))
+
+	for _, sub := range b.subscriptions {
+		sub()
 	}
 }
 
-func (t *mqttTopic) publishInternal(data string) {
-	token := t.client.Publish(t.topic, 1, false, data)
+func (b *Broker) onConnectionLost(_ mqtt.Client, err error) {
+	b.mu.Lock()
+	b.connected = false
+	b.mu.Unlock()
+
+	log.Warnf("Connection to MQTT Broker lost: %s", err)
+}
+
+func (b *Broker) publishInternal(topic, data string) {
+	token := b.client.Publish(topic, 1, false, data)
 
 	go func() {
 		token.Wait()
 
 		if err := token.Error(); err != nil {
-			log.Errorf("Error on Publish to %s: %s", t.topic, err)
+			b.errorHandler(&Error{
+				Op:      OpPublish,
+				Topic:   topic,
+				Payload: []byte(data),
+				Err:     err,
+			})
 		} else {
-			log.Infof("Successfully Published %s to %s", data, t.topic)
+			log.Infof("Successfully Published %s to %s", data, topic)
 		}
 	}()
 }
 
-func (t *mqttTopic) PublishString(s string) {
-	t.publishInternal(s)
+func (b *Broker) registerSubscription(topic string, callback mqtt.MessageHandler) {
+	sub := func() {
+		token := b.client.Subscribe(topic, 0, callback)
+
+		go func() {
+			token.Wait()
+
+			if err := token.Error(); err != nil {
+				b.errorHandler(&Error{
+					Op:    OpSubscribe,
+					Topic: topic,
+					Err:   err,
+				})
+			} else {
+				log.Infof("Successfully Subscribed to %s", topic)
+			}
+		}()
+	}
+
+	b.mu.Lock()
+	defer b.mu.Unlock()
+
+	b.subscriptions = append(b.subscriptions, sub)
+
+	if b.connected {
+		sub()
+	}
 }
 
-func (t *mqttTopic) Publish(data any) {
+func (t *Topic) PublishString(s string) {
+	t.broker.publishInternal(t.topic, s)
+}
+
+func (t *Topic) Publish(data any) error {
 	b, err := json.Marshal(data)
 	if err != nil {
-		log.Errorf("Error on Publish, cannot marshal JSON: %s", err)
-
-		return
+		return fmt.Errorf("marshal publish payload for topic %q: %w", t.topic, err)
 	}
 
-	t.publishInternal(string(b))
+	t.broker.publishInternal(t.topic, string(b))
+
+	return nil
 }
 
-func (t *mqttTopic) SubscribeRawJSON(callback broker.CallbackFunction) {
-	internalCallback := func(_ mqtt.Client, message mqtt.Message) {
-		var raw any
-
-		err := json.Unmarshal(message.Payload(), &raw)
-		if err != nil {
-			log.Errorf("Cannot unmarshal {%s}: %s", message.Payload(), err)
-
-			return
-		}
-
-		log.Debugf("calling callback with: %#v", raw)
-		callback(message.Topic(), raw)
-	}
-
-	t.subscribeInternal(internalCallback)
-}
-
-func (t *mqttTopic) Subscribe(hint any, callback broker.CallbackFunction) {
-	internalCallback := func(_ mqtt.Client, message mqtt.Message) {
+func (t *Topic) Subscribe[T any](callback CallbackFunction[T]) {
+	t.broker.registerSubscription(t.topic, func(_ mqtt.Client, message mqtt.Message) {
 		log.Debugf("got MQTT message: %s", message.Payload())
 
-		payload := reflect.New(reflect.TypeOf(hint))
+		var payload T
 
-		err := json.Unmarshal(message.Payload(), payload.Interface())
+		err := json.Unmarshal(message.Payload(), &payload)
 		if err != nil {
-			log.Errorf("Cannot unmarshal {%s} into %s: %s", message.Payload(), reflect.TypeOf(hint), err)
+			t.broker.errorHandler(&Error{
+				Op:      OpUnmarshal,
+				Topic:   message.Topic(),
+				Payload: message.Payload(),
+				Err:     err,
+			})
 
 			return
 		}
 
-		log.Debugf("calling callback with: %#v", payload.Interface())
-		callback(message.Topic(), payload.Interface())
-	}
-
-	t.subscribeInternal(internalCallback)
+		log.Debugf("calling callback with: %#v", payload)
+		callback(message.Topic(), payload)
+	})
 }
 
-func (t *mqttTopic) subscribeInternal(internalCallback func(client mqtt.Client, message mqtt.Message)) {
-	token := t.client.Subscribe(t.topic, 0, internalCallback)
-
-	go func() {
-		token.Wait()
-
-		if err := token.Error(); err != nil {
-			log.Errorf("Error on Subscribe to %s: %s", t.topic, err)
-		} else {
-			log.Infof("Successfully Subscribed to %s", t.topic)
-		}
-	}()
-}
-
-func NewBroker(options ...Option) broker.Broker {
+func NewBroker(options ...Option) *Broker {
 	config := newDefaultConfig()
 
 	for _, opt := range options {
 		opt(config)
 	}
 
-	client := mqtt.NewClient(config.clientOptions)
-
-	return &mqttBroker{
-		client: client,
+	b := &Broker{
+		errorHandler: config.errorHandler,
 	}
+	config.clientOptions.SetOnConnectHandler(b.onConnect)
+	config.clientOptions.SetConnectionLostHandler(b.onConnectionLost)
+
+	b.client = config.clientFactory(config.clientOptions)
+
+	return b
 }

@@ -30,7 +30,7 @@ Event-driven automation rules and payload matchers must be verified through **ou
 | Real Mosquitto MQTT broker via Podman / Testcontainers               |
 +----------------------------------------------------------------------+
 | Tier 2: In-Memory Component & Pipeline Fakes                         |
-| null.NewBroker(), in-memory broker channel fixtures, context cancel  |
+| mqtttest.NewBroker() & mqtttest.Simulator in-memory Paho fakes       |
 +----------------------------------------------------------------------+
 | Tier 1: Pure Matcher, Expander, & Config Tabular Unit Tests          |
 | match(), numericEqual(), replaceIfYamlMatcher(), newPublisher()      |
@@ -38,13 +38,13 @@ Event-driven automation rules and payload matchers must be verified through **ou
 ```
 
 ### Tier 1: Pure Matcher, Expander, & Config Tabular Tests
-- **Scope**: Pattern matching ([`match`](../internal/automation/match.go#L5)), numeric coercion ([`numericEqual`](../internal/automation/match.go#L36)), YAML expander ([`replaceIfYamlMatcher`](../internal/automation/automation.go#L47)), publisher selection ([`newPublisher`](../internal/automation/publisher.go#L49)), and configuration parsing ([`config.ParseConfig`](../config/config.go#L65)).
+- **Scope**: Pattern matching ([`match`](../internal/automation/match.go)), numeric coercion ([`numericEqual`](../internal/automation/match.go)), YAML expander ([`replaceIfYamlMatcher`](../internal/automation/automation.go)), publisher selection ([`newPublisher`](../internal/automation/publisher.go)), and configuration parsing ([`config.ParseConfig`](../config/config.go)).
 - **Characteristics**: 100% in-memory, deterministic, zero network or filesystem dependencies, executes in milliseconds.
 - **Target Packages**: [`internal/automation`](../internal/automation), [`config`](../config), [`pkg/log`](../pkg/log).
 
 ### Tier 2: In-Memory Component Fakes
-- **Scope**: Verifying [`automation.Automation`](../internal/automation/automation.go#L19) event loops, topic dispatch, and context cancellation without real network sockets.
-- **Fixtures**: Use [`null.NewBroker()`](../pkg/broker/null/nullBroker.go#L37) or lightweight channel-based fakes implementing [`broker.Broker`](../pkg/broker/broker.go#L5) and [`broker.Topic`](../pkg/broker/broker.go#L10) to capture published messages.
+- **Scope**: Verifying [`automation.Automation`](../internal/automation/automation.go) event loops, topic dispatch, and context cancellation without real network sockets.
+- **Fixtures**: Use [`mqtttest.NewBroker`](../pkg/broker/mqtt/mqtttest/simulator.go) and [`mqtttest.Simulator`](../pkg/broker/mqtt/mqtttest/simulator.go) to inject an in-memory `paho.Client` fake into [`mqtt.NewBroker`](../pkg/broker/mqtt/mqttBroker.go) and capture published messages.
 
 ### Tier 3: Container Integration Tests
 - **Scope**: Live end-to-end MQTT connectivity using an external Mosquitto broker container.
