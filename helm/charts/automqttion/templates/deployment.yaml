@@ -13,9 +13,14 @@ spec:
       {{- include "automqttion.selectorLabels" . | nindent 6 }}
   template:
     metadata:
-      {{- with .Values.podAnnotations }}
+      {{- if or .Values.podAnnotations .Values.config }}
       annotations:
+        {{- if .Values.config }}
+        checksum/config: {{ include (print $.Template.BasePath "/configmap.yaml") . | sha256sum }}
+        {{- end }}
+        {{- with .Values.podAnnotations }}
         {{- toYaml . | nindent 8 }}
+        {{- end }}
       {{- end }}
       labels:
         {{- include "automqttion.selectorLabels" . | nindent 8 }}
@@ -39,6 +44,18 @@ spec:
           {{- end }}
           resources:
             {{- toYaml .Values.resources | nindent 12 }}
+          {{- if .Values.config }}
+          volumeMounts:
+            - name: config
+              mountPath: /config
+              readOnly: true
+          {{- end }}
+      {{- if .Values.config }}
+      volumes:
+        - name: config
+          configMap:
+            name: {{ include "automqttion.fullname" . }}
+      {{- end }}
       {{- with .Values.nodeSelector }}
       nodeSelector:
         {{- toYaml . | nindent 8 }}

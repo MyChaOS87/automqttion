@@ -16,7 +16,7 @@ When smart home protocols (such as Local Control Network, Zigbee, or Matter) pub
   - `$plain`: Publishes unencoded plain-text commands (e.g., `on`, `off`, `toggle`) to device topics.
   - `$json`: Marshals Go objects into structured JSON packets.
 - **Minimal `FROM scratch` Container**: Multi-stage build producing a self-contained, statically linked binary with CA certificates and zero shell overhead.
-- **Kubernetes Helm Chart**: Production Helm chart under `helm/charts/automqttion` supporting Deployment, ServiceAccount, and HorizontalPodAutoscaler resources.
+- **Kubernetes Helm Chart**: Production Helm chart under `helm/charts/automqttion` supporting Deployment, ConfigMap, ServiceAccount, and HorizontalPodAutoscaler resources.
 
 ---
 

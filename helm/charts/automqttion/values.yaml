@@ -50,6 +50,9 @@ resources: {}
 
 env: []
 
+# Optional raw YAML content mounted at /config/config.yml (overrides baked default config).
+config: ""
+
 autoscaling:
   enabled: false
   minReplicas: 1
