@@ -181,6 +181,42 @@ func TestMatch(t *testing.T) {
 			data:     map[string]any{"a": "not-a-nested-map", "b": 2},
 			expected: false,
 		},
+		{
+			name:     "nil-valued map target does not match missing key",
+			target:   map[string]any{"a": nil},
+			data:     map[string]any{"b": 1},
+			expected: false,
+		},
+		{
+			name:     "nil-valued map target matches explicit null key",
+			target:   map[string]any{"a": nil},
+			data:     map[string]any{"a": nil},
+			expected: true,
+		},
+		{
+			name:     "[]any numeric arrays match across int and float64",
+			target:   []any{1, 2},
+			data:     []any{float64(1), float64(2)},
+			expected: true,
+		},
+		{
+			name:     "[]any arrays with nested maps and numeric coercion match",
+			target:   []any{map[string]any{"id": 10}, "ok"},
+			data:     []any{map[string]any{"id": float64(10), "extra": true}, "ok"},
+			expected: true,
+		},
+		{
+			name:     "[]any arrays with different lengths do not match",
+			target:   []any{1, 2},
+			data:     []any{float64(1), float64(2), float64(3)},
+			expected: false,
+		},
+		{
+			name:     "[]any target against non-slice data does not match",
+			target:   []any{1, 2},
+			data:     "1,2",
+			expected: false,
+		},
 	}
 
 	for _, tt := range tests {

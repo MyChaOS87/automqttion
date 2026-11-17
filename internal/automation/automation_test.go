@@ -72,6 +72,24 @@ func TestReplaceIfYamlMatcher(t *testing.T) {
 			input:       map[string]any{"$yaml": "invalid: [yaml"},
 			expectedErr: automation.ErrYamlMatcherParse,
 		},
+		{
+			name:  "map with $yaml array expands into []any",
+			input: map[string]any{"$yaml": "[1, 2]\n"},
+			expected: []any{
+				1,
+				2,
+			},
+		},
+		{
+			name:        "map with non-scalar $plain value returns ErrPlainMatcherInvalid",
+			input:       map[string]any{"$plain": map[string]any{"nested": true}},
+			expectedErr: automation.ErrPlainMatcherInvalid,
+		},
+		{
+			name:        "map with nil $plain value returns ErrPlainMatcherInvalid",
+			input:       map[string]any{"$plain": nil},
+			expectedErr: automation.ErrPlainMatcherInvalid,
+		},
 	}
 
 	for _, tt := range tests {
@@ -105,7 +123,33 @@ func TestDereference(t *testing.T) {
 	intVal := 99
 	mapVal := map[string]any{"action": "toggle"}
 
+	var (
+		typedNilInt *int
+		typedNilStr *string
+		typedNilMap *map[string]any
+	)
+
 	tests := dereferenceTestCases{
+		{
+			name:     "untyped nil",
+			input:    nil,
+			expected: nil,
+		},
+		{
+			name:     "typed nil int pointer returns nil",
+			input:    typedNilInt,
+			expected: nil,
+		},
+		{
+			name:     "typed nil string pointer returns nil",
+			input:    typedNilStr,
+			expected: nil,
+		},
+		{
+			name:     "typed nil map pointer returns nil",
+			input:    typedNilMap,
+			expected: nil,
+		},
 		{
 			name:     "non-pointer string",
 			input:    "direct",
@@ -273,6 +317,89 @@ func TestAutomationStart(t *testing.T) {
 					Topic:   "zigbee2mqtt/lamp/set",
 					QoS:     1,
 					Payload: "ON",
+				},
+			},
+		},
+		{
+			name:        "unquoted plain-text MQTT payloads match scalar and $plain rules",
+			sourceTopic: "shellyplug-lamp/status/switch:0",
+			matchConfigs: []config.MatchConfig{
+				{
+					Match: "on",
+					Actions: []config.ActionConfig{
+						{
+							Topic:   "home/indicator/set",
+							Content: map[string]any{"$plain": "1"},
+						},
+					},
+				},
+				{
+					Match: map[string]any{"$plain": "online"},
+					Actions: []config.ActionConfig{
+						{
+							Topic:   "home/availability/set",
+							Content: map[string]any{"$plain": "up"},
+						},
+					},
+				},
+				{
+					Match: map[string]any{"$plain": 1},
+					Actions: []config.ActionConfig{
+						{
+							Topic:   "home/numeric/set",
+							Content: map[string]any{"$plain": "raw-one"},
+						},
+					},
+				},
+			},
+			inboundEvents: []string{
+				"on",
+				"off",
+				"online",
+				"1",
+				"1.0",
+			},
+			expectedPubs: []mqtttest.PublishedMessage{
+				{
+					Topic:   "home/indicator/set",
+					QoS:     1,
+					Payload: "1",
+				},
+				{
+					Topic:   "home/availability/set",
+					QoS:     1,
+					Payload: "up",
+				},
+				{
+					Topic:   "home/numeric/set",
+					QoS:     1,
+					Payload: "raw-one",
+				},
+			},
+		},
+		{
+			name:        "plain-text payload ignored cleanly by JSON map rule",
+			sourceTopic: "zigbee2mqtt/mixed",
+			matchConfigs: []config.MatchConfig{
+				{
+					Match: map[string]any{"values": []any{1, 2}},
+					Actions: []config.ActionConfig{
+						{
+							Topic:   "home/array/matched",
+							Content: map[string]any{"$plain": "yes"},
+						},
+					},
+				},
+			},
+			inboundEvents: []string{
+				"offline",
+				`{"values":[1,2],"extra":true}`,
+			},
+			expectedPubs: []mqtttest.PublishedMessage{
+				{
+					Topic:   "home/array/matched",
+					QoS:     1,
+					Payload: "yes",
 				},
 			},
 		},

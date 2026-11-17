@@ -30,6 +30,11 @@ func ReplaceIfYamlMatcher(m any) (any, error) {
 	return replaceIfYamlMatcher(m)
 }
 
+// CompileMatcher exposes compileMatcher for testing in package automation_test.
+func CompileMatcher(m any) (any, bool, error) {
+	return compileMatcher(m)
+}
+
 // Dereference exposes dereference for testing in package automation_test.
 func Dereference(a any) any {
 	return dereference(a)

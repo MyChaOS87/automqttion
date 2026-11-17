@@ -3,24 +3,49 @@ package automation
 import "reflect"
 
 func match(target, data any) bool {
-	if tgt, ok := target.(map[string]any); ok {
-		dat, ok := data.(map[string]any)
-		if !ok {
-			return false
-		}
+	switch tgt := target.(type) {
+	case map[string]any:
+		return matchMap(tgt, data)
+	case []any:
+		return matchSlice(tgt, data)
+	}
 
-		for k, v := range tgt {
-			if ret := match(v, dat[k]); !ret {
-				return false
-			}
-		}
-
-		return true
-	} else if reflect.TypeOf(target) == reflect.TypeOf(data) {
+	if reflect.TypeOf(target) == reflect.TypeOf(data) {
 		return reflect.DeepEqual(target, data)
 	}
 
 	return numericEqual(target, data)
+}
+
+func matchMap(tgt map[string]any, data any) bool {
+	dat, ok := data.(map[string]any)
+	if !ok {
+		return false
+	}
+
+	for k, v := range tgt {
+		dv, exists := dat[k]
+		if !exists || !match(v, dv) {
+			return false
+		}
+	}
+
+	return true
+}
+
+func matchSlice(tgt []any, data any) bool {
+	dat, ok := data.([]any)
+	if !ok || len(tgt) != len(dat) {
+		return false
+	}
+
+	for i := range tgt {
+		if !match(tgt[i], dat[i]) {
+			return false
+		}
+	}
+
+	return true
 }
 
 func isNumeric(v any) bool {

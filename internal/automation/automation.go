@@ -1,6 +1,7 @@
 package automation
 
 import (
+	"encoding/json"
 	"errors"
 	"fmt"
 	"reflect"
@@ -15,6 +16,7 @@ import (
 var (
 	ErrYamlMatcherNotString = errors.New("$yaml element can only hold a string")
 	ErrYamlMatcherParse     = errors.New("cannot parse configuration $yaml tag")
+	ErrPlainMatcherInvalid  = errors.New("$plain element can only hold a scalar value")
 )
 
 type Automation interface {
@@ -23,6 +25,7 @@ type Automation interface {
 
 type matcher struct {
 	match      any
+	plain      bool
 	publishers []publisher
 }
 
@@ -34,23 +37,50 @@ type automation struct {
 
 func (a *automation) Start() {
 	a.broker.Topic(a.topic).
-		Subscribe(func(_ string, data any) {
-			for _, matcher := range a.matchers {
-				if match(matcher.match, dereference(data)) {
-					for _, publisher := range matcher.publishers {
-						if err := publisher.Publish(); err != nil {
-							log.Errorf("cannot publish action: %s", err)
-						}
-					}
-				}
-			}
-		})
+		SubscribeRaw(a.handleMessage)
 }
 
-func replaceIfYamlMatcher(m any) (any, error) {
+func (a *automation) handleMessage(_ string, raw []byte) {
+	var (
+		jsonParsed  bool
+		jsonPayload any
+		jsonErr     error
+	)
+
+	rawStr := string(raw)
+
+	for _, m := range a.matchers {
+		var matched bool
+
+		if m.plain {
+			matched = m.match == rawStr
+		} else {
+			if !jsonParsed {
+				jsonErr = json.Unmarshal(raw, &jsonPayload)
+				jsonParsed = true
+			}
+
+			if jsonErr == nil {
+				matched = match(m.match, dereference(jsonPayload))
+			} else {
+				matched = match(m.match, rawStr)
+			}
+		}
+
+		if matched {
+			for _, p := range m.publishers {
+				if err := p.Publish(); err != nil {
+					log.Errorf("cannot publish action: %s", err)
+				}
+			}
+		}
+	}
+}
+
+func compileMatcher(m any) (any, bool, error) {
 	val := reflect.ValueOf(m)
 	if val.Kind() != reflect.Map {
-		return m, nil
+		return m, false, nil
 	}
 
 	iter := val.MapRange()
@@ -60,32 +90,58 @@ func replaceIfYamlMatcher(m any) (any, error) {
 		v := iter.Value()
 
 		if k.Kind() != reflect.String {
-			return m, nil
+			return m, false, nil
 		}
 
-		if k.String() == "$yaml" {
-			var newVal map[string]any
+		switch k.String() {
+		case "$yaml":
+			var newVal any
 
 			s, ok := v.Interface().(string)
 			if !ok {
-				return nil, ErrYamlMatcherNotString
+				return nil, false, ErrYamlMatcherNotString
 			}
 
-			err := yaml.Unmarshal([]byte(s), &newVal)
-			if err != nil {
-				return nil, fmt.Errorf("%w: %w", ErrYamlMatcherParse, err)
+			if err := yaml.Unmarshal([]byte(s), &newVal); err != nil {
+				return nil, false, fmt.Errorf("%w: %w", ErrYamlMatcherParse, err)
 			}
 
-			return newVal, nil
+			return newVal, false, nil
+		case "$plain":
+			raw := v.Interface()
+			if !isScalar(raw) {
+				return nil, false, ErrPlainMatcherInvalid
+			}
+
+			return fmt.Sprintf("%v", raw), true, nil
 		}
 	}
 
-	return m, nil
+	return m, false, nil
+}
+
+func isScalar(v any) bool {
+	switch v.(type) {
+	case string, bool:
+		return true
+	default:
+		return isNumeric(v)
+	}
+}
+
+func replaceIfYamlMatcher(m any) (any, error) {
+	compiled, _, err := compileMatcher(m)
+
+	return compiled, err
 }
 
 func dereference(a any) any {
 	v := reflect.ValueOf(a)
 	if v.Kind() == reflect.Pointer {
+		if v.IsNil() {
+			return nil
+		}
+
 		return v.Elem().Interface()
 	}
 
@@ -96,7 +152,7 @@ func NewAutomation(broker *mqtt.Broker, topic string, matchersConfig []config.Ma
 	matchers := make([]matcher, 0, len(matchersConfig))
 
 	for _, cfg := range matchersConfig {
-		matched, err := replaceIfYamlMatcher(cfg.Match)
+		matched, plain, err := compileMatcher(cfg.Match)
 		if err != nil {
 			return nil, err
 		}
@@ -108,6 +164,7 @@ func NewAutomation(broker *mqtt.Broker, topic string, matchersConfig []config.Ma
 
 		matchers = append(matchers, matcher{
 			match:      matched,
+			plain:      plain,
 			publishers: publishers,
 		})
 	}
