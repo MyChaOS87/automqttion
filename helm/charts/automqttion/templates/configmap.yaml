@@ -7,5 +7,9 @@ metadata:
     {{- include "automqttion.labels" . | nindent 4 }}
 data:
   config.yml: |-
+    {{- if kindIs "string" .Values.config }}
     {{- .Values.config | nindent 4 }}
+    {{- else }}
+    {{- toYaml .Values.config | nindent 4 }}
+    {{- end }}
 {{- end }}

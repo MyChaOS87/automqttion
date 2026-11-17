@@ -34,17 +34,18 @@ match:
     Payload: "MAQ="
 ```
 - **Convention**: The value of `$yaml` must strictly be a string containing valid YAML.
-- **Handling**: Unmarshaled into a `map[string]any` during automation initialization so that runtime matching operates on in-memory Go maps without runtime string parsing.
+- **Handling**: Unmarshaled into Go values (`any` — maps, slices, or scalars) during automation initialization so that runtime matching operates on in-memory values without runtime string parsing.
 
-### 2. `$plain` Action Content Operator
-Used inside `content:` blocks to signal unencoded string transmission:
+### 2. `$plain` Operator (Inbound Match & Outbound Content)
+Used inside `match:` to match raw unquoted MQTT payloads (`on`, `off`, `"1"`) and inside `content:` to signal unencoded string transmission:
 ```yaml
 actions:
   - topic: home/livingroom/light/set
     content:
       $plain: on
 ```
-- **Convention**: Emits the value converted to string via `fmt.Sprintf("%v", content)` through [`topic.PublishString`](../pkg/broker/mqtt/mqttBroker.go).
+- **Inbound `match:`**: Validates scalar values (`string`, `bool`, numeric) and compares raw UTF-8 message payloads against `fmt.Sprintf("%v", value)`.
+- **Outbound `content:`**: Emits the value converted to string via `fmt.Sprintf("%v", content)` through [`topic.PublishString`](../pkg/broker/mqtt/mqttBroker.go).
 
 ### 3. `$json` Action Content Operator
 Used inside `content:` blocks to signal structured JSON marshaling:
@@ -90,13 +91,13 @@ return nil, fmt.Errorf("failed to read config: %w", err)
 ```
 
 ### No `log.Fatal` in Library Code
-**Rule**: Libraries and sub-packages must **never** call `log.Fatal`, `log.Fatalf`, or `os.Exit`. Constructors and parsers (such as [`NewAutomation`](../internal/automation/automation.go), [`replaceIfYamlMatcher`](../internal/automation/automation.go), and [`cmd.Init`](../internal/cmd/init.go)) return typed `error` values up the call stack so the CLI entrypoint in `main()` handles process termination cleanly.
+**Rule**: Libraries and sub-packages must **never** call `log.Fatal`, `log.Fatalf`, or `os.Exit`. Constructors and parsers (such as [`NewAutomation`](../internal/automation/automation.go), [`compileMatcher`](../internal/automation/automation.go), and [`cmd.Init`](../internal/cmd/init.go)) return typed `error` values up the call stack so the CLI entrypoint in `main()` handles process termination cleanly (`os.Exit(1)`).
 
 ---
 
 ## Functional Options Pattern
 
-Component configuration in `pkg/` follows the functional options pattern for extensible, zero-allocation setup:
+Component configuration in `pkg/` follows the functional options pattern for extensible setup:
 
 ```go
 type (
@@ -105,45 +106,37 @@ type (
         clientOptions *mqtt.ClientOptions
         clientFactory func(*mqtt.ClientOptions) mqtt.Client
         errorHandler  ErrorHandler
+        tokenTimeout  time.Duration
     }
 )
 
-func BrokerURL(broker string) Option {
-    return func(c *Config) {
-        c.clientOptions.AddBroker(broker)
-    }
-}
-
-func TLS(tls *tls.Config) Option {
-    return func(c *Config) {
-        c.clientOptions.TLSConfig = tls
-    }
-}
-
-func NewBroker(options ...Option) *Broker {
-    config := newDefaultConfig()
-    for _, opt := range options {
-        opt(config)
-    }
-    b := &Broker{
-        errorHandler: config.errorHandler,
-    }
-    config.clientOptions.SetOnConnectHandler(b.onConnect)
-    config.clientOptions.SetConnectionLostHandler(b.onConnectionLost)
-    b.client = config.clientFactory(config.clientOptions)
-    return b
-}
+func BrokerURL(broker string) Option
+func ClientID(clientID string) Option
+func Credentials(username, password string) Option
+func TLS(tls *tls.Config) Option
+func TokenTimeout(timeout time.Duration) Option
+func ClientFactory(factory func(*mqtt.ClientOptions) mqtt.Client) Option
+func OnError(handler ErrorHandler) Option
 ```
+Use [`mqtt.BuildTLSConfig`](../pkg/broker/mqtt/tls.go) to construct a TLS 1.2+ `*tls.Config` extending system root CAs (`x509.SystemCertPool`) with optional CA PEM and mutual-TLS client cert/key files (returning `ErrInvalidTLSConfig` on invalid inputs). Asynchronous publish/subscribe token timeouts wrap `ErrTokenTimeout` and `context.DeadlineExceeded`.
 
 ---
 
-## Configuration & Viper Mapping
+## Secret Redaction (`pkg/hidden`)
 
-Configuration is loaded using Viper in [`config/config.go`](../config/config.go):
-- **Environment Prefix**: `AUTOMQTTION`
-- **Key Delimiter**: Standard dots (`.`) are mapped to underscores (`_`) using `strings.NewReplacer(".", "_")`.
-- **Precedence**: Environment variables override configuration file values automatically via `v.AutomaticEnv()`.
-- **Search Paths**: The loader searches `./config/config.{yml,yaml,json}` relative to working directory.
+Sensitive config fields use [`hidden.String`](../pkg/hidden/string.go) (`MqttConfig.Password`) and [`hidden.URL`](../pkg/hidden/url.go) (`MqttConfig.Broker`):
+- Formatting via `String()`, `GoString()`, or `MarshalJSON()` automatically emits `*HIDDEN*` (or masks `user:*HIDDEN*@host` in URLs), keeping startup config logs (`%+v`) safe even when `logger.development: true`.
+- Retrieve plaintext exclusively at client boundaries using `.Reveal()`.
+
+---
+
+## Configuration & Hybrid Viper + YAML Mapping
+
+Configuration is loaded using a hybrid Viper + `yaml.v3` pipeline in [`config/config.go`](../config/config.go):
+- **Viper Options**: `viper.NewWithOptions(viper.KeyDelimiter("::"), viper.ExperimentalBindStruct())` prevents dot-splitting and automatically binds all `Logger` and `Mqtt` (including `Mqtt.TLS`) struct fields to environment variables even when omitted from YAML.
+- **Environment Prefix & Delimiter**: `AUTOMQTTION` prefix with `::` mapped to `_` (`AUTOMQTTION_MQTT_BROKER`, `AUTOMQTTION_MQTT_TLS_CAFILE`, `AUTOMQTTION_MQTT_TLS_SERVERNAME`, `AUTOMQTTION_LOGGER_LEVEL`, etc.).
+- **Case- & Dot-Preserving `Automate`**: `Config.Automate` carries `mapstructure:"-"` and is decoded directly from `v.ConfigFileUsed()` via `go.yaml.in/yaml/v3`, preserving mixed-case and dotted MQTT topics and inline matcher/`$json` keys.
+- **Search Paths**: Accepts explicit config file paths (`.yml` / `.yaml`) or searches `./config/config.{yml,yaml,json}` relative to working directory.
 
 ---
 

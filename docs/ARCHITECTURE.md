@@ -17,12 +17,13 @@ flowchart TD
 
     subgraph Internal["Application Internals (internal/ & config/)"]
         cfg["config (Config, LoadConfig, ParseConfig)"]
-        cmdInit["internal/cmd (Init, Signals, Logger setup)"]
+        cmdInit["internal/cmd (Init, Signals, NewMQTTBroker)"]
         auto["internal/automation (Automation, matcher, match, publisher)"]
     end
 
     subgraph Pkg["Reusable Platform Libraries (pkg/)"]
-        mqttPkg["pkg/broker/mqtt (Paho MQTT Broker, Topic & Options)"]
+        mqttPkg["pkg/broker/mqtt (Paho MQTT Broker, Topic, TLS)"]
+        hiddenPkg["pkg/hidden (Secret String & URL Masking)"]
         logPkg["pkg/log (Zap Logger wrapper)"]
         logCfg["pkg/log/config (Logger config struct)"]
     end
@@ -34,11 +35,13 @@ flowchart TD
     cmdEntry --> logPkg
 
     cmdInit --> cfg
+    cmdInit --> mqttPkg
     cmdInit --> logPkg
 
     auto --> cfg
     auto --> mqttPkg
 
+    cfg --> hiddenPkg
     cfg --> logCfg
 
     mqttPkg --> logPkg
@@ -51,7 +54,7 @@ flowchart TD
 
     class cmdEntry cliClass;
     class cfg,cmdInit,auto internalClass;
-    class mqttPkg,logPkg,logCfg pkgClass;
+    class mqttPkg,hiddenPkg,logPkg,logCfg pkgClass;
 ```
 
 ---
@@ -73,13 +76,17 @@ sequenceDiagram
     participant Pub as publisher (internal/automation)
     participant TargetTopic as Target Topic (pkg/broker/mqtt)
 
-    External->>Broker: Publish message to topic (e.g. lcn/segment/0/target/4/)
+    External->>Broker: Publish message to topic (e.g. lcn/segment/0/target/4/ or switch/state)
     Broker->>MQTTTopic: Inbound MQTT packet
-    MQTTTopic->>MQTTTopic: Subscribe[any] callback (unmarshal JSON payload)
-    MQTTTopic->>Auto: callback(topic, rawPayload)
-    Auto->>Auto: dereference(rawPayload)
+    MQTTTopic->>MQTTTopic: SubscribeRaw callback (raw []byte payload)
+    MQTTTopic->>Auto: callback(topic, rawBytes)
     loop For each configured matcher
-        Auto->>Matcher: match(matcher.match, dereferencedPayload)
+        alt $plain matcher
+            Auto->>Matcher: rawStr == matcher.match
+        else JSON / scalar matcher
+            Auto->>Auto: Lazy json.Unmarshal(rawBytes) with string fallback
+            Auto->>Matcher: match(matcher.match, dereference(payload))
+        end
         alt Pattern Matches (subset & numeric equivalence)
             Matcher-->>Auto: true
             loop For each action publisher
@@ -114,8 +121,9 @@ Incoming JSON Data                Target Rule Pattern
 }                                }
 ```
 
-### 1. Structural Subset Matching
-When the target pattern is a `map[string]any`, the matcher iterates across all keys present in the target. It requires each target key to exist in the data map and recursively evaluates [`match(v, dat[k])`](../internal/automation/match.go). Additional fields in the incoming payload are ignored, allowing broad events to trigger targeted automations.
+### 1. Structural Subset & Array Matching
+- When the target pattern is a `map[string]any`, the matcher iterates across all keys present in the target. It requires each target key to exist in the data map (`val, exists := dat[k]`) and recursively evaluates [`match(v, val)`](../internal/automation/match.go). Additional fields in the incoming payload are ignored, allowing broad events to trigger targeted automations.
+- When the target pattern is a `[]any`, the matcher requires an incoming `[]any` of identical length and evaluates [`match(tgt[i], dat[i])`](../internal/automation/match.go) element-wise.
 
 ### 2. Cross-Type Numeric Equality
 In IoT architectures, numbers often undergo type shifts between producers, brokers, and parsers (e.g., an integer `104` in YAML vs `float64(104)` parsed from JSON).
@@ -124,8 +132,10 @@ The function [`numericEqual`](../internal/automation/match.go) avoids false nega
 - Converting operands bidirectionally via `reflect.Value.Convert`.
 - Asserting equality in both directions to prevent loss of precision during narrowing conversions.
 
-### 3. YAML Pre-Compilation (`$yaml`)
-During automation initialization in [`NewAutomation`](../internal/automation/automation.go), the helper [`replaceIfYamlMatcher`](../internal/automation/automation.go) scans each rule's match field. If a map contains `$yaml`, the inline string block is unmarshaled into `map[string]any` upfront. Rule evaluation at runtime occurs purely between in-memory Go maps with zero string-parsing overhead.
+### 3. Matcher Pre-Compilation (`$yaml` & `$plain`)
+During automation initialization in [`NewAutomation`](../internal/automation/automation.go), the helper [`compileMatcher`](../internal/automation/automation.go) scans each rule's match field:
+- `$yaml`: Unmarshals the inline YAML string into Go values (`any` — maps, slices, or scalars) via `go.yaml.in/yaml/v3` upfront.
+- `$plain`: Validates scalar values and pre-formats them via `fmt.Sprintf("%v", raw)` for exact raw UTF-8 string comparison against inbound MQTT payloads (`on`, `off`, `online`, `"1"`).
 
 ---
 
@@ -170,10 +180,10 @@ classDiagram
 ### Multi-Stage `FROM scratch` Build
 The production container is defined in [`build/automqttion/Dockerfile`](../build/automqttion/Dockerfile):
 
-1. **Build Stage (`golang:1.27-alpine`)**:
+1. **Build Stage (`--platform=$BUILDPLATFORM golang:1.27-alpine`)**:
    - Creates an unprivileged `appuser` (`UID 10001`, `/sbin/nologin`).
    - Downloads modules and copies source code.
-   - Compiles a stripped static Go binary using `-ldflags "-w -s -X main.Version=$APP_VERSION -extldflags '-static'"`.
+   - Cross-compiles natively on `$BUILDPLATFORM` (`CGO_ENABLED=0 GOOS=${TARGETOS:-linux} GOARCH=${TARGETARCH} GOARM=${TARGETVARIANT#v}`) using `-ldflags "-w -s -X main.Version=${APP_VERSION}"` without QEMU emulation.
    - Uses build cache mounts (`--mount=type=cache,target=/root/.cache/go-build`) for rapid compilation.
 2. **Runtime Stage (`FROM scratch`)**:
    - Zero OS bloat, minimal attack surface, zero shell binaries.
@@ -182,10 +192,9 @@ The production container is defined in [`build/automqttion/Dockerfile`](../build
    - Runs as unprivileged `USER appuser:appuser` with entrypoint `["/automqttion"]`.
 
 ### Kubernetes Helm Chart
-The repository includes a production-ready Helm chart under [`helm/charts/automqttion`](../helm/charts/automqttion):
-- [`Chart.yaml`](../helm/charts/automqttion/Chart.yaml): Versioned application chart (`version: 0.0.7`, `appVersion: "0.0.7"`).
-- [`values.yaml`](../helm/charts/automqttion/values.yaml): Default values specifying image repository `ghcr.io/mychaos87/automqttion`, resource limits, pod security contexts, and replicas.
-- [`templates/configmap.yaml`](../helm/charts/automqttion/templates/configmap.yaml): Optional ConfigMap mounted read-only at `/config` when `.Values.config` is provided.
-- [`templates/deployment.yaml`](../helm/charts/automqttion/templates/deployment.yaml): Standard Kubernetes Deployment manifest with readiness and liveness lifecycle definitions.
+The repository includes a production-ready singleton Helm chart under [`helm/charts/automqttion`](../helm/charts/automqttion):
+- [`Chart.yaml`](../helm/charts/automqttion/Chart.yaml): Versioned application chart (`version: 0.1.0`, `appVersion: "0.1.0"`).
+- [`values.yaml`](../helm/charts/automqttion/values.yaml): Default values enforcing singleton `replicaCount: 1` (standard MQTT v3.1.1 subscriptions duplicate actions across multiple replicas), `strategy.type: Recreate`, `image.repository: ghcr.io/mychaos87/automqttion`, and hardened non-root security contexts (`UID 10001`, `readOnlyRootFilesystem: true`, `capabilities.drop: [ALL]`).
+- [`templates/configmap.yaml`](../helm/charts/automqttion/templates/configmap.yaml): Optional ConfigMap supporting raw YAML strings or structured mappings mounted read-only at `/config` when `.Values.config` is provided.
+- [`templates/deployment.yaml`](../helm/charts/automqttion/templates/deployment.yaml): Standard singleton Kubernetes Deployment manifest with config checksum pod annotation and `Recreate` rollout strategy.
 - [`templates/serviceaccount.yaml`](../helm/charts/automqttion/templates/serviceaccount.yaml): Dedicated ServiceAccount for RBAC isolation.
-- [`templates/hpa.yaml`](../helm/charts/automqttion/templates/hpa.yaml): Optional HorizontalPodAutoscaler for high-throughput MQTT workloads.

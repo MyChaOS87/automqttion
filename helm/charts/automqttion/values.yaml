@@ -2,7 +2,12 @@
 # This is a YAML-formatted file.
 # Declare variables to be passed into your templates.
 
+# Singleton deployment: standard MQTT v3.1.1 subscriptions duplicate every
+# action across replicas until MQTT v5 $share/ shared subscriptions are used.
 replicaCount: 1
+
+strategy:
+  type: Recreate
 
 image:
   repository: ghcr.io/mychaos87/automqttion
@@ -25,16 +30,19 @@ serviceAccount:
 
 podAnnotations: {}
 
-podSecurityContext: {}
-  # fsGroup: 2000
+podSecurityContext:
+  runAsNonRoot: true
+  runAsUser: 10001
+  runAsGroup: 10001
 
-securityContext: {}
-  # capabilities:
-  #   drop:
-  #   - ALL
-  # readOnlyRootFilesystem: true
-  # runAsNonRoot: true
-  # runAsUser: 1000
+securityContext:
+  allowPrivilegeEscalation: false
+  readOnlyRootFilesystem: true
+  runAsNonRoot: true
+  runAsUser: 10001
+  capabilities:
+    drop:
+      - ALL
 
 resources: {}
   # We usually recommend not to specify default resources and to leave this as a conscious
@@ -50,15 +58,8 @@ resources: {}
 
 env: []
 
-# Optional raw YAML content mounted at /config/config.yml (overrides baked default config).
+# Optional YAML string or mapping mounted at /config/config.yml (overrides baked default config).
 config: ""
-
-autoscaling:
-  enabled: false
-  minReplicas: 1
-  maxReplicas: 100
-  targetCPUUtilizationPercentage: 80
-  # targetMemoryUtilizationPercentage: 80
 
 nodeSelector: {}
 

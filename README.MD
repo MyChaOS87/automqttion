@@ -8,15 +8,15 @@ When smart home protocols (such as Local Control Network, Zigbee, or Matter) pub
 
 ## Key Features
 
-- **Declarative Rule Pipeline**: Configure multi-topic reactive automations directly in YAML without writing glue code.
-- **Structural Subset Pattern Matching**: Incoming JSON payloads are matched against target patterns; incoming payloads can contain extra fields while matching required values.
-- **Type-Tolerant Numeric Comparison**: Avoids false negatives between JSON `float64` numbers and YAML integers via bidirectional conversion checking.
+- **Declarative Rule Pipeline**: Configure multi-topic reactive automations directly in YAML without writing glue code (preserving case-sensitive and dotted MQTT topics).
+- **Structural Subset & Array Pattern Matching**: Incoming JSON payloads and unquoted plain-text MQTT payloads (`on`, `off`, `online`) are matched against target patterns (`map[string]any`, `[]any`, scalars, and explicit `$plain` rules); incoming objects can contain extra fields while matching required keys.
+- **Type-Tolerant Numeric Comparison**: Avoids false negatives between JSON `float64` numbers and YAML integers via bidirectional conversion checking across scalars and `[]any` slices.
 - **Embedded YAML Matcher Blocks (`$yaml`)**: Write complex multi-field payload matchers as readable YAML blocks instead of escaped JSON strings.
 - **Action Content Operators**:
-  - `$plain`: Publishes unencoded plain-text commands (e.g., `on`, `off`, `toggle`) to device topics.
+  - `$plain`: Publishes unencoded plain-text commands (e.g., `on`, `off`, `toggle`) to device topics (and matches exact raw string payloads when used inside `match:`).
   - `$json`: Marshals Go objects into structured JSON packets.
-- **Minimal `FROM scratch` Container**: Multi-stage build producing a self-contained, statically linked binary with CA certificates and zero shell overhead.
-- **Kubernetes Helm Chart**: Production Helm chart under `helm/charts/automqttion` supporting Deployment, ConfigMap, ServiceAccount, and HorizontalPodAutoscaler resources.
+- **Minimal `FROM scratch` Container**: Multi-stage cross-compiled build producing a self-contained, statically linked binary with CA certificates and zero shell overhead.
+- **Kubernetes Helm Chart**: Hardened singleton Helm chart under `helm/charts/automqttion` supporting Deployment (`Recreate`), ConfigMap, and ServiceAccount resources.
 
 ---
 

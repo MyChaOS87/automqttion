@@ -22,12 +22,12 @@
   },
   "components": [
     {
-      "bom-ref": "pkg:github/actions/checkout@v3?package-id=de6e13f8cac04fc3",
+      "bom-ref": "pkg:github/actions/checkout@v6.0.2?package-id=a9f6de7ac609ca28",
       "type": "library",
       "name": "actions/checkout",
-      "version": "v3",
-      "cpe": "cpe:2.3:a:actions\\/checkout:actions\\/checkout:v3:*:*:*:*:*:*:*",
-      "purl": "pkg:github/actions/checkout@v3",
+      "version": "v6.0.2",
+      "cpe": "cpe:2.3:a:actions\\/checkout:actions\\/checkout:v6.0.2:*:*:*:*:*:*:*",
+      "purl": "pkg:github/actions/checkout@v6.0.2",
       "properties": [
         {
           "name": "syft:package:foundBy",
@@ -44,32 +44,6 @@
         {
           "name": "syft:location:0:path",
           "value": ".github/workflows/docker-publish.yml"
-        }
-      ]
-    },
-    {
-      "bom-ref": "pkg:github/actions/checkout@v3?package-id=fbdb9d8e4cd75865",
-      "type": "library",
-      "name": "actions/checkout",
-      "version": "v3",
-      "cpe": "cpe:2.3:a:actions\\/checkout:actions\\/checkout:v3:*:*:*:*:*:*:*",
-      "purl": "pkg:github/actions/checkout@v3",
-      "properties": [
-        {
-          "name": "syft:package:foundBy",
-          "value": "github-actions-usage-cataloger"
-        },
-        {
-          "name": "syft:package:type",
-          "value": "github-action"
-        },
-        {
-          "name": "syft:package:metadataType",
-          "value": "github-actions-use-statement"
-        },
-        {
-          "name": "syft:location:0:path",
-          "value": ".github/workflows/release-chart.yml"
         }
       ]
     },
@@ -96,6 +70,32 @@
         {
           "name": "syft:location:0:path",
           "value": ".github/workflows/go.yml"
+        }
+      ]
+    },
+    {
+      "bom-ref": "pkg:github/actions/checkout@v6.0.2?package-id=a4015734aa3532a1",
+      "type": "library",
+      "name": "actions/checkout",
+      "version": "v6.0.2",
+      "cpe": "cpe:2.3:a:actions\\/checkout:actions\\/checkout:v6.0.2:*:*:*:*:*:*:*",
+      "purl": "pkg:github/actions/checkout@v6.0.2",
+      "properties": [
+        {
+          "name": "syft:package:foundBy",
+          "value": "github-actions-usage-cataloger"
+        },
+        {
+          "name": "syft:package:type",
+          "value": "github-action"
+        },
+        {
+          "name": "syft:package:metadataType",
+          "value": "github-actions-use-statement"
+        },
+        {
+          "name": "syft:location:0:path",
+          "value": ".github/workflows/release-chart.yml"
         }
       ]
     },
@@ -146,12 +146,12 @@
       ]
     },
     {
-      "bom-ref": "pkg:github/azure/setup-helm@v3?package-id=57ba97d8c0026bcd",
+      "bom-ref": "pkg:github/azure/setup-helm@v5.1.0?package-id=754760bf75d5e7d3",
       "type": "library",
       "name": "azure/setup-helm",
-      "version": "v3",
-      "cpe": "cpe:2.3:a:azure\\/setup-helm:azure\\/setup-helm:v3:*:*:*:*:*:*:*",
-      "purl": "pkg:github/azure/setup-helm@v3",
+      "version": "v5.1.0",
+      "cpe": "cpe:2.3:a:azure\\/setup-helm:azure\\/setup-helm:v5.1.0:*:*:*:*:*:*:*",
+      "purl": "pkg:github/azure/setup-helm@v5.1.0",
       "properties": [
         {
           "name": "syft:package:foundBy",
@@ -167,23 +167,23 @@
         },
         {
           "name": "syft:cpe23",
-          "value": "cpe:2.3:a:azure\\/setup-helm:azure\\/setup_helm:v3:*:*:*:*:*:*:*"
+          "value": "cpe:2.3:a:azure\\/setup-helm:azure\\/setup_helm:v5.1.0:*:*:*:*:*:*:*"
         },
         {
           "name": "syft:cpe23",
-          "value": "cpe:2.3:a:azure\\/setup_helm:azure\\/setup-helm:v3:*:*:*:*:*:*:*"
+          "value": "cpe:2.3:a:azure\\/setup_helm:azure\\/setup-helm:v5.1.0:*:*:*:*:*:*:*"
         },
         {
           "name": "syft:cpe23",
-          "value": "cpe:2.3:a:azure\\/setup_helm:azure\\/setup_helm:v3:*:*:*:*:*:*:*"
+          "value": "cpe:2.3:a:azure\\/setup_helm:azure\\/setup_helm:v5.1.0:*:*:*:*:*:*:*"
         },
         {
           "name": "syft:cpe23",
-          "value": "cpe:2.3:a:azure\\/setup:azure\\/setup-helm:v3:*:*:*:*:*:*:*"
+          "value": "cpe:2.3:a:azure\\/setup:azure\\/setup-helm:v5.1.0:*:*:*:*:*:*:*"
         },
         {
           "name": "syft:cpe23",
-          "value": "cpe:2.3:a:azure\\/setup:azure\\/setup_helm:v3:*:*:*:*:*:*:*"
+          "value": "cpe:2.3:a:azure\\/setup:azure\\/setup_helm:v5.1.0:*:*:*:*:*:*:*"
         },
         {
           "name": "syft:location:0:path",
@@ -400,68 +400,6 @@
         {
           "name": "syft:cpe23",
           "value": "cpe:2.3:a:docker\\/setup:docker\\/setup_buildx_action:v3.10.0:*:*:*:*:*:*:*"
-        },
-        {
-          "name": "syft:location:0:path",
-          "value": ".github/workflows/docker-publish.yml"
-        }
-      ]
-    },
-    {
-      "bom-ref": "pkg:github/docker/setup-qemu-action@v2?package-id=cf89c9e7457bd3fc",
-      "type": "library",
-      "name": "docker/setup-qemu-action",
-      "version": "v2",
-      "cpe": "cpe:2.3:a:docker\\/setup-qemu-action:docker\\/setup-qemu-action:v2:*:*:*:*:*:*:*",
-      "purl": "pkg:github/docker/setup-qemu-action@v2",
-      "properties": [
-        {
-          "name": "syft:package:foundBy",
-          "value": "github-actions-usage-cataloger"
-        },
-        {
-          "name": "syft:package:type",
-          "value": "github-action"
-        },
-        {
-          "name": "syft:package:metadataType",
-          "value": "github-actions-use-statement"
-        },
-        {
-          "name": "syft:cpe23",
-          "value": "cpe:2.3:a:docker\\/setup-qemu-action:docker\\/setup_qemu_action:v2:*:*:*:*:*:*:*"
-        },
-        {
-          "name": "syft:cpe23",
-          "value": "cpe:2.3:a:docker\\/setup_qemu_action:docker\\/setup-qemu-action:v2:*:*:*:*:*:*:*"
-        },
-        {
-          "name": "syft:cpe23",
-          "value": "cpe:2.3:a:docker\\/setup_qemu_action:docker\\/setup_qemu_action:v2:*:*:*:*:*:*:*"
-        },
-        {
-          "name": "syft:cpe23",
-          "value": "cpe:2.3:a:docker\\/setup-qemu:docker\\/setup-qemu-action:v2:*:*:*:*:*:*:*"
-        },
-        {
-          "name": "syft:cpe23",
-          "value": "cpe:2.3:a:docker\\/setup-qemu:docker\\/setup_qemu_action:v2:*:*:*:*:*:*:*"
-        },
-        {
-          "name": "syft:cpe23",
-          "value": "cpe:2.3:a:docker\\/setup_qemu:docker\\/setup-qemu-action:v2:*:*:*:*:*:*:*"
-        },
-        {
-          "name": "syft:cpe23",
-          "value": "cpe:2.3:a:docker\\/setup_qemu:docker\\/setup_qemu_action:v2:*:*:*:*:*:*:*"
-        },
-        {
-          "name": "syft:cpe23",
-          "value": "cpe:2.3:a:docker\\/setup:docker\\/setup-qemu-action:v2:*:*:*:*:*:*:*"
-        },
-        {
-          "name": "syft:cpe23",
-          "value": "cpe:2.3:a:docker\\/setup:docker\\/setup_qemu_action:v2:*:*:*:*:*:*:*"
         },
         {
           "name": "syft:location:0:path",
@@ -1915,12 +1853,12 @@
       ]
     },
     {
-      "bom-ref": "pkg:github/helm/chart-releaser-action@v1.6.0?package-id=6fc4ad6b6ec97acc",
+      "bom-ref": "pkg:github/helm/chart-releaser-action@v1.9.0?package-id=3f27b8ce7bc3e94f",
       "type": "library",
       "name": "helm/chart-releaser-action",
-      "version": "v1.6.0",
-      "cpe": "cpe:2.3:a:helm\\/chart-releaser-action:helm\\/chart-releaser-action:v1.6.0:*:*:*:*:*:*:*",
-      "purl": "pkg:github/helm/chart-releaser-action@v1.6.0",
+      "version": "v1.9.0",
+      "cpe": "cpe:2.3:a:helm\\/chart-releaser-action:helm\\/chart-releaser-action:v1.9.0:*:*:*:*:*:*:*",
+      "purl": "pkg:github/helm/chart-releaser-action@v1.9.0",
       "properties": [
         {
           "name": "syft:package:foundBy",
@@ -1936,39 +1874,39 @@
         },
         {
           "name": "syft:cpe23",
-          "value": "cpe:2.3:a:helm\\/chart-releaser-action:helm\\/chart_releaser_action:v1.6.0:*:*:*:*:*:*:*"
+          "value": "cpe:2.3:a:helm\\/chart-releaser-action:helm\\/chart_releaser_action:v1.9.0:*:*:*:*:*:*:*"
         },
         {
           "name": "syft:cpe23",
-          "value": "cpe:2.3:a:helm\\/chart_releaser_action:helm\\/chart-releaser-action:v1.6.0:*:*:*:*:*:*:*"
+          "value": "cpe:2.3:a:helm\\/chart_releaser_action:helm\\/chart-releaser-action:v1.9.0:*:*:*:*:*:*:*"
         },
         {
           "name": "syft:cpe23",
-          "value": "cpe:2.3:a:helm\\/chart_releaser_action:helm\\/chart_releaser_action:v1.6.0:*:*:*:*:*:*:*"
+          "value": "cpe:2.3:a:helm\\/chart_releaser_action:helm\\/chart_releaser_action:v1.9.0:*:*:*:*:*:*:*"
         },
         {
           "name": "syft:cpe23",
-          "value": "cpe:2.3:a:helm\\/chart-releaser:helm\\/chart-releaser-action:v1.6.0:*:*:*:*:*:*:*"
+          "value": "cpe:2.3:a:helm\\/chart-releaser:helm\\/chart-releaser-action:v1.9.0:*:*:*:*:*:*:*"
         },
         {
           "name": "syft:cpe23",
-          "value": "cpe:2.3:a:helm\\/chart-releaser:helm\\/chart_releaser_action:v1.6.0:*:*:*:*:*:*:*"
+          "value": "cpe:2.3:a:helm\\/chart-releaser:helm\\/chart_releaser_action:v1.9.0:*:*:*:*:*:*:*"
         },
         {
           "name": "syft:cpe23",
-          "value": "cpe:2.3:a:helm\\/chart_releaser:helm\\/chart-releaser-action:v1.6.0:*:*:*:*:*:*:*"
+          "value": "cpe:2.3:a:helm\\/chart_releaser:helm\\/chart-releaser-action:v1.9.0:*:*:*:*:*:*:*"
         },
         {
           "name": "syft:cpe23",
-          "value": "cpe:2.3:a:helm\\/chart_releaser:helm\\/chart_releaser_action:v1.6.0:*:*:*:*:*:*:*"
+          "value": "cpe:2.3:a:helm\\/chart_releaser:helm\\/chart_releaser_action:v1.9.0:*:*:*:*:*:*:*"
         },
         {
           "name": "syft:cpe23",
-          "value": "cpe:2.3:a:helm\\/chart:helm\\/chart-releaser-action:v1.6.0:*:*:*:*:*:*:*"
+          "value": "cpe:2.3:a:helm\\/chart:helm\\/chart-releaser-action:v1.9.0:*:*:*:*:*:*:*"
         },
         {
           "name": "syft:cpe23",
-          "value": "cpe:2.3:a:helm\\/chart:helm\\/chart_releaser_action:v1.6.0:*:*:*:*:*:*:*"
+          "value": "cpe:2.3:a:helm\\/chart:helm\\/chart_releaser_action:v1.9.0:*:*:*:*:*:*:*"
         },
         {
           "name": "syft:location:0:path",
@@ -2029,11 +1967,11 @@
       "hashes": [
         {
           "alg": "SHA-1",
-          "content": "2df9a86a2b7cf35c9c6e799107d71a22d7cf8b9b"
+          "content": "c646c2b63fafe47a0f37166cdbf6e6d5265c2e81"
         },
         {
           "alg": "SHA-256",
-          "content": "466f38ea336fd55b2f3c7841a65cd9a3d4741bee24d360a540e5c9bc78592972"
+          "content": "2b364423bb12c2cf9f516ada15cb373b49551b55e23372bab8ad5ef36bde4e67"
         }
       ]
     },
@@ -2059,11 +1997,11 @@
       "hashes": [
         {
           "alg": "SHA-1",
-          "content": "85583bfe859c0bceeb766fa7c64fc1038c5da6f5"
+          "content": "778ec3f2be3aeca7deab4149a6b22f88c6d0c13f"
         },
         {
           "alg": "SHA-256",
-          "content": "c075cb46f05783d92b34b086f93078ce5176e8038816fe7434ca02baaa7d22de"
+          "content": "6161013e027ac8d6392fc8d7dfa673a64e6210081b77276d476e98b8734d095f"
         }
       ]
     },

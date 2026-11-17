@@ -1,6 +1,8 @@
 package log
 
 import (
+	"sync/atomic"
+
 	"go.uber.org/zap/zapcore"
 
 	"github.com/MyChaOS87/automqttion/pkg/log/config"
@@ -9,80 +11,82 @@ import (
 const levelInfo = "info"
 
 //nolint:gochecknoglobals
-var defaultLogger = &logger{
-	cfg: &config.Logger{
-		Development: true,
-		Encoding:    "console",
-		Level:       levelInfo,
-	},
-	loggerLevelMap: map[string]zapcore.Level{
-		"debug":   zapcore.DebugLevel,
-		levelInfo: zapcore.InfoLevel,
-		"warn":    zapcore.WarnLevel,
-		"error":   zapcore.ErrorLevel,
-		"dpanic":  zapcore.DPanicLevel,
-		"panic":   zapcore.PanicLevel,
-		"fatal":   zapcore.FatalLevel,
-	},
-}
+var defaultLogger atomic.Pointer[logger]
 
 //nolint:gochecknoinits
 func init() {
-	defaultLogger.InitLogger()
+	l := &logger{
+		cfg: &config.Logger{
+			Development: true,
+			Encoding:    "console",
+			Level:       levelInfo,
+		},
+		loggerLevelMap: map[string]zapcore.Level{
+			"debug":   zapcore.DebugLevel,
+			levelInfo: zapcore.InfoLevel,
+			"warn":    zapcore.WarnLevel,
+			"error":   zapcore.ErrorLevel,
+			"dpanic":  zapcore.DPanicLevel,
+			"panic":   zapcore.PanicLevel,
+			"fatal":   zapcore.FatalLevel,
+		},
+	}
+	l.InitLogger()
+	defaultLogger.Store(l)
 }
 
 func SetDefaultLogger(l Logger) {
 	if log, ok := l.(*logger); ok {
-		defaultLogger = log
+		defaultLogger.Store(log)
 	} else {
-		defaultLogger.DPanic("Set default logger needs an *logger as Logger")
+		defaultLogger.Load().DPanic("Set default logger needs an *logger as Logger")
 	}
 }
 
 func Debug(args ...any) {
-	defaultLogger.internalDebug(args...)
+	defaultLogger.Load().internalDebug(args...)
 }
 
 func Debugf(template string, args ...any) {
-	defaultLogger.internalDebugf(template, args...)
+	defaultLogger.Load().internalDebugf(template, args...)
 }
 
 func Info(args ...any) {
-	defaultLogger.internalInfo(args...)
+	defaultLogger.Load().internalInfo(args...)
 }
 
 func Infof(template string, args ...any) {
-	defaultLogger.internalInfof(template, args...)
+	defaultLogger.Load().internalInfof(template, args...)
 }
 
 func Warn(args ...any) {
-	defaultLogger.internalWarn(args...)
+	defaultLogger.Load().internalWarn(args...)
 }
 
 func Warnf(template string, args ...any) {
-	defaultLogger.internalWarnf(template, args...)
+	defaultLogger.Load().internalWarnf(template, args...)
 }
 
 func Error(args ...any) {
-	defaultLogger.internalError(args...)
+	defaultLogger.Load().internalError(args...)
 }
 
 func Errorf(template string, args ...any) {
-	defaultLogger.internalErrorf(template, args...)
+	defaultLogger.Load().internalErrorf(template, args...)
 }
 
 func DPanic(args ...any) {
-	defaultLogger.internalDPanic(args...)
+	defaultLogger.Load().internalDPanic(args...)
 }
 
 func DPanicf(template string, args ...any) {
-	defaultLogger.internalDPanicf(template, args...)
+	defaultLogger.Load().internalDPanicf(template, args...)
 }
 
 func Fatal(args ...any) {
-	defaultLogger.internalFatal(args...)
+	defaultLogger.Load().internalFatal(args...)
 }
 
 func Fatalf(template string, args ...any) {
-	defaultLogger.internalFatalf(template, args...)
+	defaultLogger.Load().internalFatalf(template, args...)
 }
