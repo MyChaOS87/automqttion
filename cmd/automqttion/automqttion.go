@@ -17,7 +17,7 @@ func main() {
 	defer cancel()
 
 	broker := mqtt.NewBroker(
-		mqtt.BrokerURL(cfg.Mqtt.Broker))
+		mqtt.BrokerURL(cfg.Mqtt.Broker.Reveal()))
 
 	for topic, matchers := range cfg.Automate {
 		auto, err := automation.NewAutomation(broker, topic, matchers)
