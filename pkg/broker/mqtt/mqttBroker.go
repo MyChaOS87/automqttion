@@ -5,6 +5,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"sync"
+	"time"
 
 	mqtt "github.com/eclipse/paho.mqtt.golang"
 
@@ -23,6 +24,7 @@ type Broker struct {
 	client        mqtt.Client
 	connected     bool
 	errorHandler  ErrorHandler
+	tokenTimeout  time.Duration
 	subscriptions []func()
 }
 
@@ -60,7 +62,7 @@ func (b *Broker) disconnect() {
 	defer b.mu.Unlock()
 
 	b.connected = false
-	b.client.Disconnect(0)
+	b.client.Disconnect(defaultDisconnectQuiesceMs)
 }
 
 func (b *Broker) onConnect(_ mqtt.Client) {
@@ -88,7 +90,16 @@ func (b *Broker) publishInternal(topic, data string) {
 	token := b.client.Publish(topic, 1, false, data)
 
 	go func() {
-		token.Wait()
+		if !token.WaitTimeout(b.tokenTimeout) {
+			b.errorHandler(&Error{
+				Op:      OpPublish,
+				Topic:   topic,
+				Payload: []byte(data),
+				Err:     fmt.Errorf("%w: %w", ErrTokenTimeout, context.DeadlineExceeded),
+			})
+
+			return
+		}
 
 		if err := token.Error(); err != nil {
 			b.errorHandler(&Error{
@@ -108,7 +119,15 @@ func (b *Broker) registerSubscription(topic string, callback mqtt.MessageHandler
 		token := b.client.Subscribe(topic, 0, callback)
 
 		go func() {
-			token.Wait()
+			if !token.WaitTimeout(b.tokenTimeout) {
+				b.errorHandler(&Error{
+					Op:    OpSubscribe,
+					Topic: topic,
+					Err:   fmt.Errorf("%w: %w", ErrTokenTimeout, context.DeadlineExceeded),
+				})
+
+				return
+			}
 
 			if err := token.Error(); err != nil {
 				b.errorHandler(&Error{
@@ -147,6 +166,15 @@ func (t *Topic) Publish(data any) error {
 	return nil
 }
 
+// SubscribeRaw registers a persistent subscription delivering raw payload bytes without JSON decoding.
+func (t *Topic) SubscribeRaw(callback CallbackFunction[[]byte]) {
+	t.broker.registerSubscription(t.topic, func(_ mqtt.Client, message mqtt.Message) {
+		payload := message.Payload()
+		log.Debugf("got raw MQTT message: %s", payload)
+		callback(message.Topic(), payload)
+	})
+}
+
 func (t *Topic) Subscribe[T any](callback CallbackFunction[T]) {
 	t.broker.registerSubscription(t.topic, func(_ mqtt.Client, message mqtt.Message) {
 		log.Debugf("got MQTT message: %s", message.Payload())
@@ -179,6 +207,7 @@ func NewBroker(options ...Option) *Broker {
 
 	b := &Broker{
 		errorHandler: config.errorHandler,
+		tokenTimeout: config.tokenTimeout,
 	}
 	config.clientOptions.SetOnConnectHandler(b.onConnect)
 	config.clientOptions.SetConnectionLostHandler(b.onConnectionLost)

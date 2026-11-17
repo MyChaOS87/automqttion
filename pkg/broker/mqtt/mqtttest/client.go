@@ -27,10 +27,16 @@ func (t *token) Wait() bool {
 	return true
 }
 
-func (t *token) WaitTimeout(_ time.Duration) bool {
-	<-t.done
+func (t *token) WaitTimeout(d time.Duration) bool {
+	timer := time.NewTimer(d)
+	defer timer.Stop()
 
-	return true
+	select {
+	case <-t.done:
+		return true
+	case <-timer.C:
+		return false
+	}
 }
 
 func (t *token) Done() <-chan struct{} {
@@ -95,12 +101,13 @@ func (c *pahoClient) Connect() paho.Token {
 	return newCompletedToken(nil)
 }
 
-func (c *pahoClient) Disconnect(_ uint) {
+func (c *pahoClient) Disconnect(quiesce uint) {
 	c.sim.mu.Lock()
 	defer c.sim.mu.Unlock()
 
 	c.sim.connected = false
 	c.sim.disconnected = true
+	c.sim.disconnectQuiesce = quiesce
 	c.sim.subs = nil
 }
 
@@ -121,8 +128,13 @@ func (c *pahoClient) Publish(topic string, qos byte, retained bool, payload any)
 		Retain:  retained,
 		Payload: s,
 	})
+	block := c.sim.BlockPub
 	err := c.sim.PubErr
 	c.sim.mu.Unlock()
+
+	if block {
+		return &token{done: make(chan struct{})}
+	}
 
 	return newCompletedToken(err)
 }
@@ -131,8 +143,10 @@ func (c *pahoClient) Subscribe(topic string, qos byte, callback paho.MessageHand
 	c.sim.mu.Lock()
 	c.sim.subCalls = append(c.sim.subCalls, topic)
 
+	block := c.sim.BlockSub
 	err := c.sim.SubErr
-	if err == nil {
+
+	if !block && err == nil {
 		c.sim.subs = append(c.sim.subs, subRecord{
 			topic:    topic,
 			qos:      qos,
@@ -140,6 +154,10 @@ func (c *pahoClient) Subscribe(topic string, qos byte, callback paho.MessageHand
 		})
 	}
 	c.sim.mu.Unlock()
+
+	if block {
+		return &token{done: make(chan struct{})}
+	}
 
 	return newCompletedToken(err)
 }

@@ -23,19 +23,22 @@ type subRecord struct {
 }
 
 type Simulator struct {
-	mu             sync.Mutex
-	client         *pahoClient
-	opts           *paho.ClientOptions
-	ConnectErr     error
-	BlockConnect   bool
-	DeferOnConnect bool
-	SubErr         error
-	PubErr         error
-	connected      bool
-	disconnected   bool
-	subCalls       []string
-	subs           []subRecord
-	pubs           []PublishedMessage
+	mu                sync.Mutex
+	client            *pahoClient
+	opts              *paho.ClientOptions
+	ConnectErr        error
+	BlockConnect      bool
+	BlockPub          bool
+	BlockSub          bool
+	DeferOnConnect    bool
+	SubErr            error
+	PubErr            error
+	connected         bool
+	disconnected      bool
+	disconnectQuiesce uint
+	subCalls          []string
+	subs              []subRecord
+	pubs              []PublishedMessage
 }
 
 func NewSimulator() *Simulator {
@@ -159,4 +162,18 @@ func (s *Simulator) Disconnected() bool {
 	defer s.mu.Unlock()
 
 	return s.disconnected
+}
+
+func (s *Simulator) DisconnectQuiesce() uint {
+	s.mu.Lock()
+	defer s.mu.Unlock()
+
+	return s.disconnectQuiesce
+}
+
+func (s *Simulator) ClientOptions() *paho.ClientOptions {
+	s.mu.Lock()
+	defer s.mu.Unlock()
+
+	return s.opts
 }

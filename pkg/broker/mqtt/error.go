@@ -1,10 +1,14 @@
 package mqtt
 
 import (
+	"errors"
 	"fmt"
 
 	"github.com/MyChaOS87/automqttion/pkg/log"
 )
+
+// ErrTokenTimeout indicates an MQTT publish or subscribe acknowledgement timed out.
+var ErrTokenTimeout = errors.New("mqtt token wait timed out")
 
 type Op string
 
